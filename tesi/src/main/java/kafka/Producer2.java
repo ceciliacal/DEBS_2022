@@ -56,7 +56,7 @@ public class Producer2 {
         ProducerRecord<String, String> CsvRecord = new ProducerRecord<>( Config.TOPIC1, 0, "KEY", "VALLL");
 
         //invio record
-        System.out.println("dopo MYMESSAGE");
+        System.out.println("dopo MYMESSAGE!");
         
         //invio record
         producer.send(CsvRecord, (metadata, exception) -> {
