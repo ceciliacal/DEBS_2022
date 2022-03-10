@@ -1,4 +1,4 @@
-package prova;
+package kafka;
 
 public class TestClass {
 
