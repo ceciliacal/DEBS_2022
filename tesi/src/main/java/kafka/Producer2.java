@@ -68,12 +68,13 @@ public class Producer2 {
      */
     public static void PublishMessages() throws IOException {
 
-        AtomicLong prevTs = new AtomicLong();       //counts line (currently reading)
+        AtomicLong prevTs = new AtomicLong();       //previous line timestamp
+        AtomicLong currTs = new AtomicLong();       //current line timestamp
         AtomicLong tsDifference = new AtomicLong(); //difference between current and previous ts
         AtomicInteger previous = new AtomicInteger();
         previous.set(0);
 
-        final String[][] value = {new String[4]};
+        final String[][] value = {new String[5]};
         final String[] valueToSend = new String[1];
         final Producer<String, String> producer = createProducer();
 
@@ -87,14 +88,16 @@ public class Producer2 {
             //retrieving date and time of symbol's last received update to generate a timestamp
             Timestamp timestamp = createTimestamp(lineFields[2],lineFields[3]);
             System.out.println("timestamp = " + timestamp);
-            Long currTs = timestamp.getTime();    //ts to put into producerRecord
+            //todo assert ts != null
+            currTs.set(timestamp.getTime());    //ts to put into producerRecord
             System.out.println("ts = "+currTs);
 
             //creating producer record (value) to send. it only contains data (from csv)actually useful for query's result
-            value[0][0] = lineFields[1];        //sec type
-            value[0][1]= timestamp.toString();  //ts for last received update
-            value[0][2]= lineFields[21];        //last trade price
-            value[0][3]= lineFields[23];        //last trade seconds
+            value[0][0] = lineFields[0];        //sec type
+            value[0][1] = lineFields[1];        //sec type
+            value[0][2]= timestamp.toString();  //ts for last received update
+            value[0][3]= lineFields[21];        //last trade price
+            value[0][4]= lineFields[23];        //last trade seconds
             valueToSend[0] = String.join(",", value[0]);
 
 
@@ -102,7 +105,7 @@ public class Producer2 {
             //cioè se sto dalla seconda riga in poi mi calcolo la differenza tra i long e poi faccio sleep di quei ms
             if (previous.get()!=0){
 
-                tsDifference.set(currTs - prevTs.get());
+                tsDifference.set(currTs.get() - prevTs.get());
                 System.out.println("---tsDifference = "+tsDifference);
                 Long minutesDifference = TimeUnit.MILLISECONDS.toMinutes(tsDifference.get());
                 System.out.println("--- minutesDifference: "+ minutesDifference);
@@ -117,7 +120,7 @@ public class Producer2 {
             }
 
 
-            ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currTs, lineFields[0], valueToSend[0]);
+            ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currTs.get(), lineFields[0], valueToSend[0]);
             System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+producerRecord.value());
 
             //todo fai send
@@ -132,7 +135,7 @@ public class Producer2 {
                 }
             });
 
-            prevTs.set(currTs);     //current ts is set to previous ts for next iteration
+            prevTs.set(currTs.get());     //current ts is set to previous ts for next iteration
             previous.set(1);
 
         });
