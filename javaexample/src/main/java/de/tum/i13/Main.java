@@ -91,7 +91,7 @@ public class Main {
         System.out.println("ended Benchmark");
     }
 
-    private static List<Indicator> calculateIndicators(Batch batch) {
+    public static List<Indicator> calculateIndicators(Batch batch) {
         //TODO: improve implementation
         //System.out.println("batch seqId = "+batch.getSeqId());
         System.out.println("-------------------start--------------------------");
@@ -110,7 +110,7 @@ public class Main {
         return new ArrayList<>();
     }
 
-    private static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
+    public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
         //TODO: improve this implementation
 
         return new ArrayList<>();
