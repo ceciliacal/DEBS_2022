@@ -1,5 +1,6 @@
 package subscription;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,8 @@ import subscription.challenge.ResultQ1;
 import subscription.challenge.ResultQ2;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+
+import kafka.Consumer2;
 
 public class Main {
 
@@ -57,7 +60,12 @@ public class Main {
             }
 
             //process the batch of events we have
-            var q1Results = calculateIndicators(batch);
+            List<Indicator> q1Results = null;
+            try {
+                q1Results = calculateIndicators(batch);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             ResultQ1 q1Result = ResultQ1.newBuilder()
                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
@@ -91,14 +99,23 @@ public class Main {
         System.out.println("ended Benchmark");
     }
 
-    public static List<Indicator> calculateIndicators(Batch batch) {
+    public static List<Indicator> calculateIndicators(Batch batch) throws Exception {
         //TODO: improve implementation
-        //System.out.println("batch seqId = "+batch.getSeqId());
+        //todo if no data x subscription reply con arraylist vuota
+
+        if (batch == null){
+            return new ArrayList<>();
+        }
+
+        List<String> subSymbols = new ArrayList<>();
+
+
+        /*
         System.out.println("-------------------start--------------------------");
         System.out.println("===batch.getEvents(0)= "+batch.getEvents(0));
         System.out.println("===batch.getEventsCount= "+batch.getEventsCount());
         System.out.println("===batch.getEvents(0).getSymbol= "+batch.getEvents(0).getSymbol());
-
+        System.out.println("===batch.getEvents(0).getLastTrade()= "+ new Timestamp(batch.getEvents(0).getLastTrade().getNanos()));
         Descriptors.FieldDescriptor fieldDescriptor = batch.getDescriptorForType().findFieldByName("seq_id");
         Object value = batch.getField(fieldDescriptor);
         System.out.println("value = "+batch.getAllFields());
@@ -106,6 +123,28 @@ public class Main {
 
         System.out.println("batch last = "+batch.getLast());
         System.out.println("---------------------end------------------------");
+
+         */
+
+
+
+        //todo: qui creo lista!!!! e poi chiamo consumer e chiamo le query
+        int i;
+        int numEvents = batch.getEventsCount(); //#events
+        String currSymbol;
+        for (i=0;i<numEvents;i++){
+            currSymbol = batch.getEvents(i).getSymbol();
+            if (!subSymbols.contains(currSymbol)){
+                subSymbols.add(batch.getEvents(i).getSymbol());
+            }
+
+        }
+        System.out.println("subSymbols = " + subSymbols);
+
+
+        //una volta recuperati tutti i simboli del batch, chiamo il consumer e gli passo questa lista.
+        kafka.Consumer2.startConsumer(subSymbols);
+
 
         return new ArrayList<>();
     }

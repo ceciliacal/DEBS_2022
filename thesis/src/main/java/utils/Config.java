@@ -10,6 +10,7 @@ public interface Config {
     public static String TOPIC1 = "provaTopic";
     public static String TOPIC_Q1 = "QUERY1";
     public static Double accTime = 0.0;
+    public static Integer windowSize = 5;
     public static Integer TIME_DAYS = 2;
     public static Integer TIME_DAYS_7 = 7;
     public static Integer TIME_MONTH = 28;
