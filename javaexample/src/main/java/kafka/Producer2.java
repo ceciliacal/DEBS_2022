@@ -80,7 +80,7 @@ public class Producer2 {
 
         Stream<String> FileStream = Files.lines(Paths.get(datasetPath+".csv"));
 
-        //todo: calcola n righe da skippare cambiando il dataset. fai script bash per mettere un file da riga di comando in cartella "dataset"
+        //todo: calcola n righe da skippare cambiando  il dataset. fai script bash per mettere un file da riga di comando in cartella "dataset"
         FileStream.skip(4).forEach(line -> {
 
             String[] lineFields = line.split(",");
