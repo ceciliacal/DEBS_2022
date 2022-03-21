@@ -9,7 +9,7 @@ public interface Config {
     public static String datasetPath = "dataset/test";
     public static String TOPIC1 = "provaTopic";
     public static String TOPIC_Q1 = "QUERY1";
-    public static Double accTime = 1.0;
+    public static Double accTime = 0.0;
     public static Integer windowSize = 5;
     public static String pattern = "dd-MM-yyyy HH:mm:ss.SSSS";
     public static String pattern2 = "yyyy-MM-dd HH:mm:ss.SSSS";

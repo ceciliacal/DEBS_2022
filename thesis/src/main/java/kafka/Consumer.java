@@ -1,8 +1,8 @@
 package kafka;
 
-import data.MapSrcStreamToEvent;
+import data.MapFunctionEvent;
+import flink.query1.Query1;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -19,12 +19,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 
-import static kafka.Producer.stringToTimestamp;
-
 
 public class Consumer {
 
-    private static List<String> subSymbols;
 
     public static List<Indicator> startConsumer(List<String> symbols) throws Exception {
 
@@ -32,12 +29,11 @@ public class Consumer {
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(Config.windowSize)));
         StreamExecutionEnvironment env = createEnviroment();
 
-        subSymbols = symbols;
 
         DataStream<Event> eventDataStream = env.addSource(consumer)
-                .map(new MapSrcStreamToEvent())
-                ;
+                .map(new MapFunctionEvent());
 
+        Query1.runQuery1(eventDataStream, symbols);
         env.execute("debsTest");
         return null;
     }

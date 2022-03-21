@@ -1,6 +1,10 @@
 package data;
 
+import utils.Config;
+
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Event {
 
@@ -79,7 +83,6 @@ public class Event {
         this.batch = batch;
     }
 
-
     public Timestamp getTimestamp() {
         return timestamp;
     }
@@ -88,7 +91,46 @@ public class Event {
         this.timestamp = timestamp;
     }
 
+    /*
+    Creates Timestamp object from symbol's last received update
+     */
+    public static Timestamp createTimestamp(String date, String time) {
+        //Timestamp format -> DD-MM-YYYY HH:MM:SS.ssss
+        String dateTime = date+" "+time;
+        //System.out.println("dateTime = " + dateTime);
 
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern);
+            Date parsedDate = dateFormat.parse(dateTime);
+            Timestamp timestamp = new Timestamp(parsedDate.getTime());
+            return timestamp;
+        } catch(Exception e) {
+            //error
+            return null;
+        }
+
+    }
+
+    public static Timestamp stringToTimestamp(String strDate){
+
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern2);
+            Date parsedDate = dateFormat.parse(strDate);
+            Timestamp timestamp = new Timestamp(parsedDate.getTime());
+
+            /*
+            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
+            System.out.println("parsedDate = "+parsedDate);
+            System.out.println("strDate = "+strDate);
+             */
+
+            return timestamp;
+        } catch(Exception e) {
+            //error
+            return null;
+        }
+
+    }
 
 
 }

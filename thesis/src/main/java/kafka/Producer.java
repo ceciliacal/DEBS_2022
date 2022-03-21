@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
+import static data.Event.createTimestamp;
 import static utils.Config.accTime;
 import static utils.Config.datasetPath;
 
@@ -38,45 +39,6 @@ public class Producer {
         return new KafkaProducer<>(props);
     }
 
-
-    /*
-    Creates Timestamp object from symbol's last received update
-     */
-    public static Timestamp createTimestamp(String date, String time) {
-        //Timestamp format -> DD-MM-YYYY HH:MM:SS.ssss
-        String dateTime = date+" "+time;
-        //System.out.println("dateTime = " + dateTime);
-
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern);
-            Date parsedDate = dateFormat.parse(dateTime);
-            Timestamp timestamp = new Timestamp(parsedDate.getTime());
-            return timestamp;
-        } catch(Exception e) {
-            //error
-            return null;
-        }
-
-    }
-
-    public static Timestamp stringToTimestamp(String strDate){
-
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern2);
-            Date parsedDate = dateFormat.parse(strDate);
-            Timestamp timestamp = new Timestamp(parsedDate.getTime());
-
-            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
-            System.out.println("parsedDate = "+parsedDate);
-            System.out.println("strDate = "+strDate);
-
-            return timestamp;
-        } catch(Exception e) {
-            //error
-            return null;
-        }
-
-    }
 
 
     /*
