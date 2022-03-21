@@ -1,11 +1,9 @@
 package subscription;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.google.protobuf.Descriptors;
 import subscription.challenge.Batch;
 import subscription.challenge.Benchmark;
 import subscription.challenge.BenchmarkConfiguration;
@@ -18,7 +16,7 @@ import subscription.challenge.ResultQ2;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import kafka.Consumer2;
+import kafka.Consumer;
 
 public class Main {
 
@@ -140,10 +138,11 @@ public class Main {
 
         }
         System.out.println("subSymbols = " + subSymbols);
+        System.out.println("subSymbols LEN = " + subSymbols.size());
 
 
         //una volta recuperati tutti i simboli del batch, chiamo il consumer e gli passo questa lista.
-        kafka.Consumer2.startConsumer(subSymbols);
+        Consumer.startConsumer(subSymbols);
 
 
         return new ArrayList<>();

@@ -1,7 +1,6 @@
 package kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -25,12 +24,12 @@ import static utils.Config.datasetPath;
 
 //TODO: rivedi questione timestamp sia su kafdrop e controlla sul consumer come arriva!
 
-public class Producer2 {
+public class Producer {
 
     /*
     creates kafka producer
      */
-    public static Producer<String, String> createProducer() {
+    public static org.apache.kafka.clients.producer.Producer<String, String> createProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, Config.KAFKA_BROKERS);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaProducer");
@@ -45,12 +44,11 @@ public class Producer2 {
      */
     public static Timestamp createTimestamp(String date, String time) {
         //Timestamp format -> DD-MM-YYYY HH:MM:SS.ssss
-        String pattern = "dd-MM-yyyy HH:mm:ss.SSSS";
-        String dateTime = date + " " + time;
+        String dateTime = date+" "+time;
         //System.out.println("dateTime = " + dateTime);
 
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern);
             Date parsedDate = dateFormat.parse(dateTime);
             Timestamp timestamp = new Timestamp(parsedDate.getTime());
             return timestamp;
@@ -61,6 +59,24 @@ public class Producer2 {
 
     }
 
+    public static Timestamp stringToTimestamp(String strDate){
+
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern2);
+            Date parsedDate = dateFormat.parse(strDate);
+            Timestamp timestamp = new Timestamp(parsedDate.getTime());
+
+            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
+            System.out.println("parsedDate = "+parsedDate);
+            System.out.println("strDate = "+strDate);
+
+            return timestamp;
+        } catch(Exception e) {
+            //error
+            return null;
+        }
+
+    }
 
 
     /*
@@ -76,30 +92,44 @@ public class Producer2 {
 
         final String[][] value = {new String[5]};
         final String[] valueToSend = new String[1];
-        final Producer<String, String> producer = createProducer();
+        final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
 
         Stream<String> FileStream = Files.lines(Paths.get(datasetPath+".csv"));
 
         //todo: calcola n righe da skippare cambiando  il dataset. fai script bash per mettere un file da riga di comando in cartella "dataset"
         FileStream.skip(4).forEach(line -> {
 
+            Timestamp lastTradeTs = null;
             String[] lineFields = line.split(",");
 
-            //retrieving date and time of symbol's last received update to generate a timestamp
-            Timestamp timestamp = createTimestamp(lineFields[2],lineFields[3]);
-            System.out.println("timestamp = " + timestamp);
-            //todo assert ts != null
-            currTs.set(timestamp.getTime());    //ts to put into producerRecord
+            //retrieving Date and Time of symbol's last received update to generate a timestamp
+            Timestamp lastUpdateTs = createTimestamp(lineFields[2],lineFields[3]);
+            currTs.set(lastUpdateTs.getTime());    //ts to put into producerRecord
+            System.out.println("timestamp UPDATE= " + lastUpdateTs);
             System.out.println("ts = "+currTs);
 
-            //creating producer record (value) to send. it only contains data (from csv)actually useful for query's result
-            value[0][0] = lineFields[0];        //sec type
-            value[0][1] = lineFields[1];        //sec type
-            value[0][2]= timestamp.toString();  //ts for last received update
-            value[0][3]= lineFields[21];        //last trade price
-            value[0][4]= lineFields[23];        //last trade seconds
-            valueToSend[0] = String.join(",", value[0]);
+            //if field "Trading date" is empty, last update's date is used (csv field "Date")
+            if (lineFields.length<=26){
+                //retrieving date and time of symbol's last trade to generate a timestamp
+                lastTradeTs = createTimestamp(lineFields[2], lineFields[23]);
+                //System.out.println("timestamp TRADE= " + lastTradeTs);
+            } else {
+                //retrieving date and time of symbol's last trade to generate a timestamp
+                lastTradeTs = createTimestamp(lineFields[26], lineFields[23]);
+                //System.out.println("timestamp TRADE= " + lastTradeTs);
 
+            }
+
+            //todo assert ts != null x entrambi i ts
+
+            //creating producer record (value) to send. it only contains data (from csv)actually useful for query's result
+            value[0][0] = lineFields[0];                //sec type
+            value[0][1] = lineFields[1];                //sec type
+            value[0][2]= lastUpdateTs.toString();       //ts for last received update
+            value[0][3]= lineFields[21];                //last trade price
+            value[0][4]= lastTradeTs.toString();        //last trade seconds
+
+            valueToSend[0] = String.join(",", value[0]);
 
             //sistema accelerazione
             //cioè se sto dalla seconda riga in poi mi calcolo la differenza tra i long e poi faccio sleep di quei ms

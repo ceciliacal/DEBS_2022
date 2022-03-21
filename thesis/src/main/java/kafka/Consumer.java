@@ -1,5 +1,6 @@
 package kafka;
 
+import data.MapSrcStreamToEvent;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
@@ -12,16 +13,18 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import subscription.challenge.Indicator;
 import utils.Config;
-import utils.Event;
+import data.Event;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 
+import static kafka.Producer.stringToTimestamp;
 
-public class Consumer2 {
 
-    private List<String> subSymbols;
+public class Consumer {
+
+    private static List<String> subSymbols;
 
     public static List<Indicator> startConsumer(List<String> symbols) throws Exception {
 
@@ -29,16 +32,10 @@ public class Consumer2 {
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(Config.windowSize)));
         StreamExecutionEnvironment env = createEnviroment();
 
+        subSymbols = symbols;
+
         DataStream<Event> eventDataStream = env.addSource(consumer)
-                .map(new MapFunction<String, Event>() {
-                    @Override
-                    public Event map(String value) throws Exception {
-                        String line[] = value.split(",");
-                        Event event = new Event(line[0], 0,line[1], Double.parseDouble(line[2]), Long.parseLong(line[3]));
-                        System.out.println("event = "+event.getSymbol()+", "+event.getBatch()+", "+event.getSecType()+", "+event.getLastTradePrice()+", "+event.getLastTradeTime());
-                        return event;
-                    }
-                })
+                .map(new MapSrcStreamToEvent())
                 ;
 
         env.execute("debsTest");

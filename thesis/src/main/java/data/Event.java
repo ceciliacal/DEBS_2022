@@ -1,4 +1,6 @@
-package utils;
+package data;
+
+import java.sql.Timestamp;
 
 public class Event {
 
@@ -6,17 +8,20 @@ public class Event {
     Integer batch;
     String  secType;
     Double  lastTradePrice;
-    Long    lastTradeTime;
+    Timestamp    lastTradeTime;
     Double  ema38;
     Double  ema100;
+    Timestamp timestamp;
 
-    public Event(String symbol, Integer batch, String secType, Double lastTradePrice, Long lastTradeTime) {
+    public Event(String symbol, Integer batch, String secType, Timestamp timestamp, Double lastTradePrice, Timestamp lastTradeTime) {
         this.symbol = symbol;
         this.batch = batch;
         this.secType = secType;
+        this.timestamp = timestamp;
         this.lastTradePrice = lastTradePrice;
         this.lastTradeTime = lastTradeTime;
     }
+
 
     public String getSymbol() {
         return symbol;
@@ -42,11 +47,11 @@ public class Event {
         this.lastTradePrice = lastTradePrice;
     }
 
-    public Long getLastTradeTime() {
+    public Timestamp getLastTradeTime() {
         return lastTradeTime;
     }
 
-    public void setLastTradeTime(Long lastTradeTime) {
+    public void setLastTradeTime(Timestamp lastTradeTime) {
         this.lastTradeTime = lastTradeTime;
     }
 
@@ -73,6 +78,17 @@ public class Event {
     public void setBatch(Integer batch) {
         this.batch = batch;
     }
+
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
+    }
+
+
 
 
 }
