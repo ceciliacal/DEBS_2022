@@ -7,6 +7,7 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import utils.Config;
 
+import javax.sound.midi.spi.SoundbankReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -52,7 +53,7 @@ public class Producer {
         AtomicInteger previous = new AtomicInteger();
         previous.set(0);
 
-        final String[][] value = {new String[5]};
+        final String[][] value = {new String[4]};
         final String[] valueToSend = new String[1];
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
 
@@ -61,35 +62,33 @@ public class Producer {
         //todo: calcola n righe da skippare cambiando  il dataset. fai script bash per mettere un file da riga di comando in cartella "dataset"
         FileStream.skip(4).forEach(line -> {
 
-            Timestamp lastTradeTs = null;
             String[] lineFields = line.split(",");
 
             //retrieving Date and Time of symbol's last received update to generate a timestamp
+
+            System.out.println("lineFields = "+lineFields);
+            System.out.println("lineFields size= "+lineFields.length);
+            System.out.println("lineFields[1] = "+lineFields[1]);
+            System.out.println("lineFields[2] = "+lineFields[2]);
+
+
             Timestamp lastUpdateTs = createTimestamp(lineFields[2],lineFields[3]);
+            if (lastUpdateTs == null){
+                //error
+                System.out.println("error in producer: ts is null");
+                return;
+            }
+
             currTs.set(lastUpdateTs.getTime());    //ts to put into producerRecord
             System.out.println("timestamp UPDATE= " + lastUpdateTs);
             System.out.println("ts = "+currTs);
 
-            //if field "Trading date" is empty, last update's date is used (csv field "Date")
-            if (lineFields.length<=26){
-                //retrieving date and time of symbol's last trade to generate a timestamp
-                lastTradeTs = createTimestamp(lineFields[2], lineFields[23]);
-                //System.out.println("timestamp TRADE= " + lastTradeTs);
-            } else {
-                //retrieving date and time of symbol's last trade to generate a timestamp
-                lastTradeTs = createTimestamp(lineFields[26], lineFields[23]);
-                //System.out.println("timestamp TRADE= " + lastTradeTs);
-
-            }
-
-            //todo assert ts != null x entrambi i ts
 
             //creating producer record (value) to send. it only contains data (from csv)actually useful for query's result
             value[0][0] = lineFields[0];                //sec type
             value[0][1] = lineFields[1];                //sec type
             value[0][2]= lastUpdateTs.toString();       //ts for last received update
             value[0][3]= lineFields[21];                //last trade price
-            value[0][4]= lastTradeTs.toString();        //last trade seconds
 
             valueToSend[0] = String.join(",", value[0]);
 
@@ -115,7 +114,6 @@ public class Producer {
             ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currTs.get(), lineFields[0], valueToSend[0]);
             System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+producerRecord.value());
 
-            //todo fai send
             producer.send(producerRecord, (metadata, exception) -> {
                 if(metadata != null){
                     //successful writes

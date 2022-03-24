@@ -16,7 +16,7 @@ public class MyAggregateFunction implements AggregateFunction<Event, Object, Obj
 
     @Override
     public Object add(Event value, Object accumulator) {
-        System.out.println("-- IN AGGREGATE: event = "+value.getSymbol()+" "+value.getSecType()+" "+value.getTimestamp()+" "+value.getLastTradeTime());
+        //System.out.println("-- IN AGGREGATE: event = "+value.getSymbol()+" "+value.getSecType()+" "+value.getTimestamp()+" "+value.getLastTradeTime());
         return null;
     }
 

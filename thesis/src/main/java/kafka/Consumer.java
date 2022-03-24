@@ -1,7 +1,5 @@
 package kafka;
 
-import data.MapFunctionEvent;
-import flink.query1.Query1;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -22,18 +20,22 @@ import java.util.Properties;
 
 public class Consumer {
 
+    protected static List<Event> myBatch = null;
 
-    public static List<Indicator> startConsumer(List<String> symbols) throws Exception {
+    public static List<Indicator> startConsumer(List<Event> batch) throws Exception {
 
         FlinkKafkaConsumer<String> consumer = createConsumer();
-        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(Config.windowSize)));
+        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(10)));
         StreamExecutionEnvironment env = createEnviroment();
 
+        myBatch = batch;
+
+        //todo: dopo aver capito a che serve csv, SE SERVE fare multisource (sia batch sia kafka cosi unico stream e non uso for nel main)
 
         DataStream<Event> eventDataStream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
 
-        Query1.runQuery1(eventDataStream, symbols);
+        //Query1.runQuery1(eventDataStream);
         env.execute("debsTest");
         return null;
     }
@@ -51,8 +53,6 @@ public class Consumer {
 
         DataStreamSink<String> stream = env.addSource(consumer)
                 .print();
-
-
 
         env.execute("debsTest");
 

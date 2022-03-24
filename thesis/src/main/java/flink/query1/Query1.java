@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Query1 {
 
-    public static void runQuery1(DataStream<Event> stream, List<String> symbols){
+    public static void runQuery1(DataStream<Event> stream){
 
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(event -> event.getSymbol());

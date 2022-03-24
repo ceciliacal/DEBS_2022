@@ -1,9 +1,12 @@
 package subscription;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.google.protobuf.Descriptors;
+import data.Event;
 import subscription.challenge.Batch;
 import subscription.challenge.Benchmark;
 import subscription.challenge.BenchmarkConfiguration;
@@ -17,6 +20,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 import kafka.Consumer;
+import utils.Config;
 
 public class Main {
 
@@ -98,54 +102,40 @@ public class Main {
     }
 
     public static List<Indicator> calculateIndicators(Batch batch) throws Exception {
-        //TODO: improve implementation
-        //todo if no data x subscription reply con arraylist vuota
+
+        Long seconds;
+        int i;
+        int num = batch.getEventsCount();
+        List<Event> subSymbols = new ArrayList<>();
+        SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
 
         if (batch == null){
             return new ArrayList<>();
         }
 
-        List<String> subSymbols = new ArrayList<>();
-
-
         /*
-        System.out.println("-------------------start--------------------------");
-        System.out.println("===batch.getEvents(0)= "+batch.getEvents(0));
-        System.out.println("===batch.getEventsCount= "+batch.getEventsCount());
-        System.out.println("===batch.getEvents(0).getSymbol= "+batch.getEvents(0).getSymbol());
-        System.out.println("===batch.getEvents(0).getLastTrade()= "+ new Timestamp(batch.getEvents(0).getLastTrade().getNanos()));
-        Descriptors.FieldDescriptor fieldDescriptor = batch.getDescriptorForType().findFieldByName("seq_id");
-        Object value = batch.getField(fieldDescriptor);
-        System.out.println("value = "+batch.getAllFields());
-
-
-        System.out.println("batch last = "+batch.getLast());
-        System.out.println("---------------------end------------------------");
-
+        for (i=0;i<num;i++){
+            System.out.println("----------- i = "+i+" -----------");
+            System.out.println("getSymbol = "+batch.getEvents(i).getSymbol());
+            System.out.println("getLastTradePrice = "+batch.getEvents(i).getLastTradePrice());
+            seconds = batch.getEvents(i).getLastTrade().getSeconds();
+            System.out.println("seconds = "+seconds);
+            String dateString = formatter.format(new Date(seconds * 1000L));
+            System.out.println("dateString = "+dateString);
+        }
          */
 
 
-
-        //todo: qui creo lista!!!! e poi chiamo consumer e chiamo le query
-        int i;
-        int numEvents = batch.getEventsCount(); //#events
-        String currSymbol;
-        for (i=0;i<numEvents;i++){
-            currSymbol = batch.getEvents(i).getSymbol();
-            if (!subSymbols.contains(currSymbol)){
-                subSymbols.add(batch.getEvents(i).getSymbol());
-            }
-
+        for (i=0;i<num;i++){
+            seconds = batch.getEvents(i).getLastTrade().getSeconds();
+            subSymbols.add(new Event(batch.getEvents(i).getSymbol(),1,batch.getEvents(i).getSecurityType().toString().substring(0,1), formatter.format(new Date(seconds * 1000L)), batch.getEvents(i).getLastTradePrice()));
+            System.out.println("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice());
         }
-        System.out.println("subSymbols = " + subSymbols);
-        System.out.println("subSymbols LEN = " + subSymbols.size());
 
-
-        //una volta recuperati tutti i simboli del batch, chiamo il consumer e gli passo questa lista.
         Consumer.startConsumer(subSymbols);
-
-
         return new ArrayList<>();
+
+        //TODO: LAST BATCH!!!
     }
 
     public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {

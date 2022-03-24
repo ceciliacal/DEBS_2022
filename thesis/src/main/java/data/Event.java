@@ -5,26 +5,35 @@ import utils.Config;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class Event {
 
-    String  symbol;
-    Integer batch;
-    String  secType;
-    Double  lastTradePrice;
-    Timestamp    lastTradeTime;
-    Double  ema38;
-    Double  ema100;
-    Timestamp timestamp;
+    String      symbol;
+    Integer     batch;
+    String      secType;
+    Timestamp   timestamp;
+    String      strTimestamp;
+    float       lastTradePrice;
+    Double      ema38;
+    Double      ema100;
+    Timestamp   lastBatchTimestamp;
 
-    public Event(String symbol, Integer batch, String secType, Timestamp timestamp, Double lastTradePrice, Timestamp lastTradeTime) {
+
+    public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice) {
         this.symbol = symbol;
         this.batch = batch;
         this.secType = secType;
-        this.timestamp = timestamp;
+        this.strTimestamp = strTimestamp;
         this.lastTradePrice = lastTradePrice;
-        this.lastTradeTime = lastTradeTime;
+        this.timestamp = stringToTimestamp(strTimestamp,batch);
     }
+
+    public static boolean myContains(final List<Event> list, final String symbol, final String secType, final Timestamp ts, final float price){
+        return list.stream().anyMatch(o -> o.getSymbol().equals(symbol) && o.getSecType().equals(secType)&& o.getTimestamp().equals(ts) && o.getLastTradePrice() == price);
+
+    }
+
 
 
     public String getSymbol() {
@@ -35,6 +44,14 @@ public class Event {
         this.symbol = symbol;
     }
 
+    public String getStrTimestamp() {
+        return strTimestamp;
+    }
+
+    public void setStrTimestamp(String strTimestamp) {
+        this.strTimestamp = strTimestamp;
+    }
+
     public String getSecType() {
         return secType;
     }
@@ -43,20 +60,12 @@ public class Event {
         this.secType = secType;
     }
 
-    public Double getLastTradePrice() {
+    public float getLastTradePrice() {
         return lastTradePrice;
     }
 
-    public void setLastTradePrice(Double lastTradePrice) {
+    public void setLastTradePrice(float lastTradePrice) {
         this.lastTradePrice = lastTradePrice;
-    }
-
-    public Timestamp getLastTradeTime() {
-        return lastTradeTime;
-    }
-
-    public void setLastTradeTime(Timestamp lastTradeTime) {
-        this.lastTradeTime = lastTradeTime;
     }
 
     public Double getEma38() {
@@ -95,10 +104,8 @@ public class Event {
     Creates Timestamp object from symbol's last received update
      */
     public static Timestamp createTimestamp(String date, String time) {
-        //Timestamp format -> DD-MM-YYYY HH:MM:SS.ssss
-        String dateTime = date+" "+time;
-        //System.out.println("dateTime = " + dateTime);
 
+        String dateTime = date+" "+time;
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern);
             Date parsedDate = dateFormat.parse(dateTime);
@@ -111,19 +118,24 @@ public class Event {
 
     }
 
-    public static Timestamp stringToTimestamp(String strDate){
+    public static Timestamp stringToTimestamp(String strDate, int invoker){
+
+        SimpleDateFormat dateFormat = null;
+
+        if (invoker==1){
+            dateFormat = new SimpleDateFormat(Config.pattern);
+        } else {
+            dateFormat = new SimpleDateFormat(Config.pattern2);
+        }
 
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat(Config.pattern2);
             Date parsedDate = dateFormat.parse(strDate);
             Timestamp timestamp = new Timestamp(parsedDate.getTime());
-
             /*
             System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
             System.out.println("parsedDate = "+parsedDate);
             System.out.println("strDate = "+strDate);
              */
-
             return timestamp;
         } catch(Exception e) {
             //error

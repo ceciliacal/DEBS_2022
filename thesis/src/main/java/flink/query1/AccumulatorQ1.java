@@ -2,6 +2,8 @@ package flink.query1;
 
 import org.apache.flink.api.common.accumulators.Accumulator;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 * Accumulators collect distributed statistics or aggregates in a from user functions and operators.
@@ -20,8 +22,12 @@ import java.io.Serializable;
 
 public class AccumulatorQ1 implements Serializable {
 
-    public AccumulatorQ1 AccumulatorQ1(){
-        return this;
+    private Map<Integer, Double> windowEma38;
+    private Map<Integer, Double> windowEma100;
+
+    public AccumulatorQ1(){
+        this.windowEma38 = new HashMap<>();
+        this.windowEma100 = new HashMap<>();
     }
 
     public void add(Object value) {
