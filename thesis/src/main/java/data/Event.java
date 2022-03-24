@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public class Event {
 
@@ -18,6 +19,7 @@ public class Event {
     Double      ema38;
     Double      ema100;
     Timestamp   lastBatchTimestamp;
+    Integer     position;
 
 
     public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice) {
@@ -31,9 +33,12 @@ public class Event {
 
     public static boolean myContains(final List<Event> list, final String symbol, final String secType, final Timestamp ts, final float price){
         return list.stream().anyMatch(o -> o.getSymbol().equals(symbol) && o.getSecType().equals(secType)&& o.getTimestamp().equals(ts) && o.getLastTradePrice() == price);
-
     }
 
+    public static Optional<Event> myGet(final List<Event> list, final String symbol, final String secType, final Timestamp ts, final float price){
+        return list.stream().filter(o -> o.getSymbol().equals(symbol) && o.getSecType().equals(secType)&& o.getTimestamp().equals(ts) && o.getLastTradePrice() == price).findAny();
+
+    }
 
 
     public String getSymbol() {
@@ -42,6 +47,22 @@ public class Event {
 
     public void setSymbol(String symbol) {
         this.symbol = symbol;
+    }
+
+    public Timestamp getLastBatchTimestamp() {
+        return lastBatchTimestamp;
+    }
+
+    public void setLastBatchTimestamp(Timestamp lastBatchTimestamp) {
+        this.lastBatchTimestamp = lastBatchTimestamp;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
     }
 
     public String getStrTimestamp() {
@@ -122,10 +143,10 @@ public class Event {
 
         SimpleDateFormat dateFormat = null;
 
-        if (invoker==1){
-            dateFormat = new SimpleDateFormat(Config.pattern);
-        } else {
+        if (invoker==0){
             dateFormat = new SimpleDateFormat(Config.pattern2);
+        } else {
+            dateFormat = new SimpleDateFormat(Config.pattern);
         }
 
         try {

@@ -1,5 +1,6 @@
 package kafka;
 
+import flink.query1.Query1;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -35,7 +36,7 @@ public class Consumer {
         DataStream<Event> eventDataStream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
 
-        //Query1.runQuery1(eventDataStream);
+        Query1.runQuery1(eventDataStream);
         env.execute("debsTest");
         return null;
     }

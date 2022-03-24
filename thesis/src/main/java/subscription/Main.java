@@ -1,5 +1,7 @@
 package subscription;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -125,12 +127,26 @@ public class Main {
         }
          */
 
+        FileWriter prova = new FileWriter("provaBatch.txt", true);
 
         for (i=0;i<num;i++){
             seconds = batch.getEvents(i).getLastTrade().getSeconds();
-            subSymbols.add(new Event(batch.getEvents(i).getSymbol(),1,batch.getEvents(i).getSecurityType().toString().substring(0,1), formatter.format(new Date(seconds * 1000L)), batch.getEvents(i).getLastTradePrice()));
-            System.out.println("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice());
+            Event event = new Event(batch.getEvents(i).getSymbol(),1,batch.getEvents(i).getSecurityType().toString().substring(0,1), formatter.format(new Date(seconds * 1000L)), batch.getEvents(i).getLastTradePrice());
+            event.setPosition(i);
+            subSymbols.add(event);
+
+            System.out.println("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+", "+subSymbols.get(i).getPosition());
+            //METTI CAMPO PER LA GET (INDEX DELL EVENT NELLA LISTA + LAST TS LO DEVI PRENDERE QUA!
+
+
+            /*
+            if (i==0 || i==999){
+                prova.write("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+"\n");
+            }
+             */
         }
+        prova.close();
+
 
         Consumer.startConsumer(subSymbols);
         return new ArrayList<>();
