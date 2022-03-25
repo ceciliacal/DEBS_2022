@@ -2,11 +2,11 @@ package data;
 
 import utils.Config;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Event {
 
@@ -19,7 +19,6 @@ public class Event {
     Double      ema38;
     Double      ema100;
     Timestamp   lastBatchTimestamp;
-    Integer     position;
 
 
     public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice) {
@@ -31,12 +30,26 @@ public class Event {
         this.timestamp = stringToTimestamp(strTimestamp,batch);
     }
 
-    public static boolean myContains(final List<Event> list, final String symbol, final String secType, final Timestamp ts, final float price){
-        return list.stream().anyMatch(o -> o.getSymbol().equals(symbol) && o.getSecType().equals(secType)&& o.getTimestamp().equals(ts) && o.getLastTradePrice() == price);
-    }
 
-    public static Optional<Event> myGet(final List<Event> list, final String symbol, final String secType, final Timestamp ts, final float price){
-        return list.stream().filter(o -> o.getSymbol().equals(symbol) && o.getSecType().equals(secType)&& o.getTimestamp().equals(ts) && o.getLastTradePrice() == price).findAny();
+    //prova2
+    public static List<Event> createSymbolLastTsList(final List<Event> list){
+
+        List<Event> temp = list;
+        List<Event> symbolLastTsList;
+
+        //sort the elements by symbol and find the max ts for that symbol
+        symbolLastTsList = temp.stream()
+                .collect(Collectors.groupingBy(Event::getSymbol,
+                        Collectors.maxBy(Comparator.comparing(Event::getTimestamp))))
+                .values().stream()
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        for (int i=0;i<symbolLastTsList.size();i++){
+            System.out.println("-"+symbolLastTsList.get(i).getSymbol()+" - "+symbolLastTsList.get(i).getTimestamp());
+        }
+
+        return symbolLastTsList;
 
     }
 
@@ -55,14 +68,6 @@ public class Event {
 
     public void setLastBatchTimestamp(Timestamp lastBatchTimestamp) {
         this.lastBatchTimestamp = lastBatchTimestamp;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
     }
 
     public String getStrTimestamp() {

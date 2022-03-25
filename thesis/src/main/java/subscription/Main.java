@@ -1,14 +1,12 @@
 package subscription;
 
-import java.io.File;
 import java.io.FileWriter;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
-import com.google.protobuf.Descriptors;
 import data.Event;
+import kafka.Consumer;
 import subscription.challenge.Batch;
 import subscription.challenge.Benchmark;
 import subscription.challenge.BenchmarkConfiguration;
@@ -21,8 +19,9 @@ import subscription.challenge.ResultQ2;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import kafka.Consumer;
 import utils.Config;
+
+import static data.Event.createSymbolLastTsList;
 
 public class Main {
 
@@ -108,14 +107,38 @@ public class Main {
         Long seconds;
         int i;
         int num = batch.getEventsCount();
-        List<Event> subSymbols = new ArrayList<>();
         SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
+        Map<String, Timestamp> subscribedSymbols = new HashMap<>();
 
         if (batch == null){
             return new ArrayList<>();
         }
 
-        /*
+        for (i=0;i<num;i++){
+            seconds = batch.getEvents(i).getLastTrade().getSeconds();
+            subscribedSymbols.put(batch.getEvents(i).getSymbol(), Event.stringToTimestamp(formatter.format(new Date(seconds * 1000L)),1));
+        }
+
+
+        System.out.println("===================aiuto: ");
+        subscribedSymbols.entrySet().forEach(entry -> {
+            System.out.println(entry.getKey() + " " + entry.getValue());
+        });
+
+
+        Consumer.startConsumer(subscribedSymbols);
+        return new ArrayList<>();
+    }
+
+     /*
+        FileWriter prova = new FileWriter("provaBatch.txt", true);
+        if (i==0 || i==999){
+            prova.write("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+"\n");
+        }
+        prova.close();
+     */
+
+     /*
         for (i=0;i<num;i++){
             System.out.println("----------- i = "+i+" -----------");
             System.out.println("getSymbol = "+batch.getEvents(i).getSymbol());
@@ -126,33 +149,6 @@ public class Main {
             System.out.println("dateString = "+dateString);
         }
          */
-
-        FileWriter prova = new FileWriter("provaBatch.txt", true);
-
-        for (i=0;i<num;i++){
-            seconds = batch.getEvents(i).getLastTrade().getSeconds();
-            Event event = new Event(batch.getEvents(i).getSymbol(),1,batch.getEvents(i).getSecurityType().toString().substring(0,1), formatter.format(new Date(seconds * 1000L)), batch.getEvents(i).getLastTradePrice());
-            event.setPosition(i);
-            subSymbols.add(event);
-
-            System.out.println("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+", "+subSymbols.get(i).getPosition());
-            //METTI CAMPO PER LA GET (INDEX DELL EVENT NELLA LISTA + LAST TS LO DEVI PRENDERE QUA!
-
-
-            /*
-            if (i==0 || i==999){
-                prova.write("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+"\n");
-            }
-             */
-        }
-        prova.close();
-
-
-        Consumer.startConsumer(subSymbols);
-        return new ArrayList<>();
-
-        //TODO: LAST BATCH!!!
-    }
 
     public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
         //TODO: improve this implementation

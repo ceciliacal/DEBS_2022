@@ -1,6 +1,5 @@
 package kafka;
 
-import flink.query1.Query1;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -14,50 +13,33 @@ import subscription.challenge.Indicator;
 import utils.Config;
 import data.Event;
 
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 
 public class Consumer {
 
-    protected static List<Event> myBatch = null;
+    protected static Map<String, Timestamp> subscribedSymbols = null;
 
-    public static List<Indicator> startConsumer(List<Event> batch) throws Exception {
+    public static List<Indicator> startConsumer(Map<String, Timestamp> subSymbols) throws Exception {
 
         FlinkKafkaConsumer<String> consumer = createConsumer();
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(10)));
         StreamExecutionEnvironment env = createEnviroment();
 
-        myBatch = batch;
-
-        //todo: dopo aver capito a che serve csv, SE SERVE fare multisource (sia batch sia kafka cosi unico stream e non uso for nel main)
+        subscribedSymbols = subSymbols;
 
         DataStream<Event> eventDataStream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
 
-        Query1.runQuery1(eventDataStream);
+        //Query1.runQuery1(eventDataStream);
         env.execute("debsTest");
         return null;
     }
 
-
-    public static void main(String[] args) throws Exception {
-
-        FlinkKafkaConsumer<String> consumer = createConsumer();
-        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(1)));
-        StreamExecutionEnvironment env = createEnviroment();
-
-        //creo lo stream di tipo "Ship" andando a splittare le righe
-        //che vengono lette dal topic di kafka da parte del consumer con MyMapFunction
-
-
-        DataStreamSink<String> stream = env.addSource(consumer)
-                .print();
-
-        env.execute("debsTest");
-
-    }
 
     public static FlinkKafkaConsumer<String> createConsumer() throws Exception {
         // creazione properties
@@ -84,6 +66,26 @@ public class Consumer {
 
         return env;
     }
+
+    /*
+    public static void main(String[] args) throws Exception {
+
+        FlinkKafkaConsumer<String> consumer = createConsumer();
+        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(1)));
+        StreamExecutionEnvironment env = createEnviroment();
+
+        //creo lo stream di tipo "Ship" andando a splittare le righe
+        //che vengono lette dal topic di kafka da parte del consumer con MyMapFunction
+
+
+        DataStreamSink<String> stream = env.addSource(consumer)
+                .print();
+
+        env.execute("debsTest");
+
+    }
+
+ */
 
 
 }
