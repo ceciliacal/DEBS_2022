@@ -21,8 +21,6 @@ import io.grpc.ManagedChannelBuilder;
 
 import utils.Config;
 
-import static data.Event.createSymbolLastTsList;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -98,8 +96,11 @@ public class Main {
             }
         }
 
+        //qui dovrei far partire consumer dopo che ho recuperato tutti i batch. magari chiamando calculate indicators
+
         challengeClient.endBenchmark(newBenchmark);
         System.out.println("ended Benchmark");
+
     }
 
     public static List<Indicator> calculateIndicators(Batch batch) throws Exception {
@@ -120,7 +121,7 @@ public class Main {
         }
 
 
-        System.out.println("===================aiuto: ");
+        System.out.println("===================subscribedSymbols: ");
         subscribedSymbols.entrySet().forEach(entry -> {
             System.out.println(entry.getKey() + " " + entry.getValue());
         });

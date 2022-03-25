@@ -1,5 +1,6 @@
 package flink.query1;
 
+import data.Event;
 import org.apache.flink.api.common.accumulators.Accumulator;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -22,7 +23,9 @@ import java.util.Map;
 
 public class AccumulatorQ1 implements Serializable {
 
-    private Map<Integer, Double> windowEma38;
+    //count curr window, ema curr window
+    //window count starts from 0
+    private Map<Integer, Double> windowEma38;   //TODO: essendo hashmap, faccio sempre il calcolo e lo sovrascrivo con ultimo price!!! quando si chiude la finestra
     private Map<Integer, Double> windowEma100;
 
     public AccumulatorQ1(){
@@ -30,7 +33,13 @@ public class AccumulatorQ1 implements Serializable {
         this.windowEma100 = new HashMap<>();
     }
 
-    public void add(Object value) {
+    public void add(Event value) {
+        Double res;
+
+
+        if (!windowEma38.containsKey(0)){
+            //nothing
+        }
 
     }
 

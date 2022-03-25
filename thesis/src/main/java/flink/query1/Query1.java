@@ -29,6 +29,10 @@ public class Query1 {
 
 
         /*
+        Processwindowfunction holds iteratable objects of all elements contained in a window,
+        as well as additional meta information of the window to which the element belongs.
+         */
+
         keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
                 .aggregate(new MyAggregateFunction(), new ProcessWindowFunction<Object, Object, String, TimeWindow>() {
@@ -45,7 +49,7 @@ public class Query1 {
                 .print()
                 ;
 
-         */
+
 
 
 

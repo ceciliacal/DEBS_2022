@@ -1,6 +1,7 @@
-package kafka;
+package flink.query1;
 
 import data.Event;
+import kafka.Consumer;
 import org.apache.flink.api.common.functions.MapFunction;
 
 

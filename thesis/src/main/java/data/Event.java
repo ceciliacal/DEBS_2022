@@ -30,8 +30,6 @@ public class Event {
         this.timestamp = stringToTimestamp(strTimestamp,batch);
     }
 
-
-    //prova2
     public static List<Event> createSymbolLastTsList(final List<Event> list){
 
         List<Event> temp = list;
