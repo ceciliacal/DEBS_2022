@@ -23,42 +23,24 @@ import java.util.Map;
 
 public class AccumulatorQ1 implements Serializable {
 
-    //count curr window, ema curr window
-    //window count starts from 0
-    private Map<Integer, Double> windowEma38;   //TODO: essendo hashmap, faccio sempre il calcolo e lo sovrascrivo con ultimo price!!! quando si chiude la finestra
-    private Map<Integer, Double> windowEma100;
+    private float lastPrice;
 
     public AccumulatorQ1(){
-        this.windowEma38 = new HashMap<>();
-        this.windowEma100 = new HashMap<>();
+        this.lastPrice = 0;
+
     }
 
     public void add(Event value) {
-        Double res;
-
-
-        if (!windowEma38.containsKey(0)){
-            //nothing
-        }
+        lastPrice = value.getLastTradePrice();
 
     }
 
-    public Serializable getLocalValue() {
-        return null;
+    public float getLastPrice(){
+        return lastPrice;
     }
 
-
-    public void resetLocal() {
-
-    }
-
-    public void merge(Accumulator<Object, Serializable> other) {
-
-    }
-
-    @Override
-    public Accumulator<Object, Serializable> clone() {
-        return null;
+    public void setLastPrice(float lastPrice) {
+        this.lastPrice = lastPrice;
     }
 }
 

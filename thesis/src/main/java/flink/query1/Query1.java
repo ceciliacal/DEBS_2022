@@ -3,6 +3,7 @@ package flink.query1;
 import data.Event;
 
 import kafka.Consumer;
+import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
@@ -35,6 +36,9 @@ public class Query1 {
 
         keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+                .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
+
+                /*
                 .aggregate(new MyAggregateFunction(), new ProcessWindowFunction<Object, Object, String, TimeWindow>() {
                     @Override
                     public void process(String s, ProcessWindowFunction<Object, Object, String, TimeWindow>.Context context, Iterable<Object> elements, Collector<Object> out) throws Exception {
@@ -46,6 +50,8 @@ public class Query1 {
                         System.out.println("--  IN WINDOWFUNCTION: key = "+s+" window start DATE = "+windowStart);
                     }
                 })
+
+                 */
                 .print()
                 ;
 
