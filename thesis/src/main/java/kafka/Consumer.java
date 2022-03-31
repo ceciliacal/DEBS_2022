@@ -2,11 +2,14 @@ package kafka;
 
 import flink.query1.MapFunctionEvent;
 import flink.query1.Query1;
+import org.apache.flink.api.common.eventtime.TimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.functions.source.TimestampedInputSplit;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -27,16 +30,17 @@ public class Consumer {
 
     public static List<Indicator> startConsumer(Map<String, Timestamp> subSymbols) throws Exception {
 
-        FlinkKafkaConsumer<String> consumer = createConsumer();
-        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(30)));
-        StreamExecutionEnvironment env = createEnviroment();
-
         subscribedSymbols = subSymbols;
+
+        FlinkKafkaConsumer<String> consumer = createConsumer();
+        StreamExecutionEnvironment env = createEnviroment();
+        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(30)));
 
         DataStream<Event> eventDataStream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
 
         Query1.runQuery1(eventDataStream);
+
         env.execute("debsTest");
         return null;
     }

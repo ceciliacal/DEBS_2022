@@ -1,24 +1,13 @@
 package flink.query1;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class OutputQ1 {
 
     private float lastPrice;
-    private Map<Integer, Float> ema38;
-    private String symbol;
 
     public OutputQ1(float price) {
         this.lastPrice = price;
-
-    }
-
-    public OutputQ1(String key, Integer countWindow, Float ema38, Float ema100, Float lastPrice){
-        this.symbol = key;
-        this.lastPrice = lastPrice;
-        this.ema38 = new HashMap<>();
-        this.ema38.put(countWindow,ema38);
 
     }
 
@@ -41,14 +30,6 @@ public class OutputQ1 {
 
    }
 
-    public String getSymbol() {
-        return symbol;
-    }
-
-    public void setSymbol(String symbol) {
-        this.symbol = symbol;
-    }
-
     public float getLastPrice() {
         return lastPrice;
     }
@@ -57,11 +38,5 @@ public class OutputQ1 {
         this.lastPrice = lastPrice;
     }
 
-    public Map<Integer, Float> getEma38() {
-        return ema38;
-    }
 
-    public void setEma38(Map<Integer, Float> ema38) {
-        this.ema38 = ema38;
-    }
 }

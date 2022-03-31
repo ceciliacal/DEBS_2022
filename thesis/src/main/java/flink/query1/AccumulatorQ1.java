@@ -3,8 +3,6 @@ package flink.query1;
 import data.Event;
 import org.apache.flink.api.common.accumulators.Accumulator;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 /*
 * Accumulators collect distributed statistics or aggregates in a from user functions and operators.

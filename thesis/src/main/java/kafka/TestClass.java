@@ -1,29 +1,72 @@
 package kafka;
 
-import java.util.HashMap;
+import flink.query1.MapFunctionEvent;
+import flink.query1.Query1;
+import org.apache.flink.api.common.eventtime.TimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSink;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.functions.source.TimestampedInputSplit;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import subscription.challenge.Indicator;
+import utils.Config;
+import data.Event;
+
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
+/*
+        io dovrei leggere dati da env.addSource e poi quando faccio map e li trasformo in Event so che per quel batch
+        sono eventInBatch. Mi calcolo quindi ema primo batch fino al 8.15, poi quando passo al secondo batch devo
+        sicuramente mantenere dati calcolati per primo batch
+
+        cioè io è come se ho subito tutta la sorgente di dati e devo leggere fino alla riga con ts max sul csv (ts max che recupero
+        dai subsymbols) e poi quando ricevo batch dopo rileggo fino al punto max ecc.. -> quindi devo settare sia event time
+         */
 
 public class TestClass {
 
-    private static Map<Integer, Double> windowEma38;
+    public static Map<String, Timestamp> subscribedSymbols = null;
 
-    public static void main(String[] args){
+    public static List<Indicator> start(Map<String, Timestamp> subSymbols) throws Exception {
 
-        System.out.println("Hello World!!!!!!!!!!");
-        //windowEma38 = new HashMap<>();
+        subscribedSymbols = subSymbols;
+        StreamExecutionEnvironment env = createEnviroment();
 
-        ciao(windowEma38);
+        DataStream<String> inputStream = env.addSource(new MySourceFunction(Config.datasetPath+".csv"))
+                //.setParallelism(1)
+                ;
+
+        DataStream<Event> stream = inputStream
+                .map(new MapFunctionEvent());
+
+                stream.print();
 
 
-
+        env.execute("debsTest2");
+        return null;
     }
 
-    public static void ciao(Map<Integer, Double> bho){
-        if (windowEma38==null){
-            System.out.println("È NULL");
-            windowEma38 = new HashMap<>();
-        }
-        System.out.println("windowEma38 SIZE = "+windowEma38.size());
+
+    public static StreamExecutionEnvironment createEnviroment(){
+        System.out.println("--sto in create env--");
+
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
+        return env;
     }
+
+
+
 
 }

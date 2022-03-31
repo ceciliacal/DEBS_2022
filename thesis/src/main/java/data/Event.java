@@ -30,6 +30,21 @@ public class Event {
         this.timestamp = stringToTimestamp(strTimestamp,batch);
     }
 
+    @Override
+    public String toString() {
+        return "Event{" +
+                "symbol='" + symbol + '\'' +
+                ", batch=" + batch +
+                ", secType='" + secType + '\'' +
+                ", timestamp=" + timestamp +
+                ", strTimestamp='" + strTimestamp + '\'' +
+                ", lastTradePrice=" + lastTradePrice +
+                ", ema38=" + ema38 +
+                ", ema100=" + ema100 +
+                ", lastBatchTimestamp=" + lastBatchTimestamp +
+                '}';
+    }
+
     public static List<Event> createSymbolLastTsList(final List<Event> list){
 
         List<Event> temp = list;

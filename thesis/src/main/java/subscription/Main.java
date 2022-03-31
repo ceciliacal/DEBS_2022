@@ -7,15 +7,8 @@ import java.util.*;
 
 import data.Event;
 import kafka.Consumer;
-import subscription.challenge.Batch;
-import subscription.challenge.Benchmark;
-import subscription.challenge.BenchmarkConfiguration;
-import subscription.challenge.ChallengerGrpc;
-import subscription.challenge.CrossoverEvent;
-import subscription.challenge.Indicator;
-import subscription.challenge.Query;
-import subscription.challenge.ResultQ1;
-import subscription.challenge.ResultQ2;
+import kafka.TestClass;
+import subscription.challenge.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -96,8 +89,6 @@ public class Main {
             }
         }
 
-        //qui dovrei far partire consumer dopo che ho recuperato tutti i batch. magari chiamando calculate indicators
-
         challengeClient.endBenchmark(newBenchmark);
         System.out.println("ended Benchmark");
 
@@ -110,6 +101,7 @@ public class Main {
         int num = batch.getEventsCount();
         SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
         Map<String, Timestamp> subscribedSymbols = new HashMap<>();
+
 
         if (batch == null){
             return new ArrayList<>();
@@ -127,17 +119,12 @@ public class Main {
         });
 
 
-        Consumer.startConsumer(subscribedSymbols);
+        TestClass.start(subscribedSymbols);
+        //Consumer.startConsumer(subscribedSymbols);
+
+
         return new ArrayList<>();
     }
-
-     /*
-        FileWriter prova = new FileWriter("provaBatch.txt", true);
-        if (i==0 || i==999){
-            prova.write("subSymbols["+i+"] = " + subSymbols.get(i).getSymbol()+", "+subSymbols.get(i).getBatch()+", "+subSymbols.get(i).getSecType()+", "+subSymbols.get(i).getStrTimestamp()+", "+subSymbols.get(i).getLastTradePrice()+"\n");
-        }
-        prova.close();
-     */
 
      /*
         for (i=0;i<num;i++){

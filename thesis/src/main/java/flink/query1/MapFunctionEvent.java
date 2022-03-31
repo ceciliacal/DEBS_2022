@@ -1,8 +1,10 @@
 package flink.query1;
 
 import data.Event;
-import kafka.Consumer;
+import kafka.TestClass;
 import org.apache.flink.api.common.functions.MapFunction;
+
+import static data.Event.createTimestamp;
 
 
 public class MapFunctionEvent implements MapFunction<String, Event> {
@@ -10,12 +12,15 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
     @Override
     public Event map(String value) throws Exception {
 
+        //System.out.println("value = "+value);
         String line[] = value.split(",");
-        Event event = new Event(line[0], 0,line[1], line[2], Float.parseFloat(line[3]));
+        String ts = createTimestamp(line[2],line[3]).toString();
+        Event event = new Event(line[0], 0,line[1], ts, Float.parseFloat(line[21]));
+        System.out.println("event = "+event.toString());
 
-        if (Consumer.subscribedSymbols.containsKey(event.getSymbol())){
+        if (TestClass.subscribedSymbols.containsKey(event.getSymbol())){
             event.setBatch(1);
-            event.setLastBatchTimestamp(Consumer.subscribedSymbols.get(event.getSymbol()));
+            event.setLastBatchTimestamp(TestClass.subscribedSymbols.get(event.getSymbol()));
             System.out.println("event IN BATCH = "+event.getSymbol()+", "+event.getBatch()+", "+event.getSecType()+", "+event.getTimestamp()+", "+event.getLastTradePrice()+", "+event.getLastBatchTimestamp());
 
         } else {

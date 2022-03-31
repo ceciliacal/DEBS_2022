@@ -10,7 +10,7 @@ public interface Config {
     public static String KAFKA_BROKERS = "localhost:9091";
     public static String CLIENT_ID = "myclient";
     //public static String datasetPath = "dataset/debs-2022-gc-test-set-trading";
-    public static String datasetPath = "dataset/test";
+    public static String datasetPath = "dataset/test2";
     public static String TOPIC1 = "provaTopic";
     public static String TOPIC_Q1 = "QUERY1";
     public static Double accTime = 0.0;
