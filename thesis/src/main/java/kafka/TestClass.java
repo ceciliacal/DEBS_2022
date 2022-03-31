@@ -11,7 +11,12 @@ import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.functions.source.TimestampedInputSplit;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import subscription.challenge.Indicator;
@@ -20,9 +25,7 @@ import data.Event;
 
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /*
         io dovrei leggere dati da env.addSource e poi quando faccio map e li trasformo in Event so che per quel batch
@@ -36,20 +39,60 @@ import java.util.Properties;
 public class TestClass {
 
     public static Map<String, Timestamp> subscribedSymbols = null;
+    public static Integer countBatch;
+    public static Timestamp startBatchTs;
+    public static Timestamp endBatchTs;
 
-    public static List<Indicator> start(Map<String, Timestamp> subSymbols) throws Exception {
+
+
+    public static void start0(Map<String, Timestamp> subSymbols, int numBatch){
+        subscribedSymbols = subSymbols;
+
+        if (numBatch==0){
+
+        }
+
+    }
+    public static List<Indicator> start(Map<String, Timestamp> subSymbols, int cnt, Timestamp start) throws Exception {
 
         subscribedSymbols = subSymbols;
+        countBatch = cnt;
+        startBatchTs = start;
+        endBatchTs = Collections.min(subscribedSymbols.values());
+        System.out.println("endBatchTs = "+endBatchTs);
+        System.out.println("startBatchTs = "+startBatchTs);
+
+
         StreamExecutionEnvironment env = createEnviroment();
 
-        DataStream<String> inputStream = env.addSource(new MySourceFunction(Config.datasetPath+".csv"))
+        DataStream<Event> inputStream = env.addSource(new MySourceFunction(Config.datasetPath+".csv"))
+                .assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(30)));
                 //.setParallelism(1)
-                ;
 
+        /*
+        inputStream.keyBy(event -> event.getSymbol())
+                .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+                .process(new ProcessWindowFunction<Event, Object, String, TimeWindow>() {
+                            @Override
+                            public void process(String s, ProcessWindowFunction<Event, Object, String, TimeWindow>.Context context, Iterable<Event> elements, Collector<Object> out) throws Exception {
+                                Long windowStart = context.window().getStart();
+                                Date date = new Date();
+                                date.setTime(windowStart);
+                                System.out.println("START WINDOW: "+date+" event = "+elements.iterator().next().getSymbol()+" "+elements.iterator().next().getTimestamp());
+                            }
+                });
+                
+         */
+                
+        //todo qui un if se query è 1 o 2
+
+        /*
         DataStream<Event> stream = inputStream
                 .map(new MapFunctionEvent());
 
-                stream.print();
+         */
+
+        inputStream.print();
 
 
         env.execute("debsTest2");

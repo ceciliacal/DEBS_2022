@@ -16,6 +16,8 @@ import utils.Config;
 
 public class Main {
 
+    public static Timestamp start;
+
     public static void main(String[] args) {
 
         ManagedChannel channel = ManagedChannelBuilder
@@ -56,7 +58,7 @@ public class Main {
             //process the batch of events we have
             List<Indicator> q1Results = null;
             try {
-                q1Results = calculateIndicators(batch);
+                q1Results = calculateIndicators(batch, cnt);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -94,7 +96,8 @@ public class Main {
 
     }
 
-    public static List<Indicator> calculateIndicators(Batch batch) throws Exception {
+    //cnt: # of batch
+    public static List<Indicator> calculateIndicators(Batch batch, int cnt) throws Exception {
 
         Long seconds;
         int i;
@@ -118,9 +121,13 @@ public class Main {
             System.out.println(entry.getKey() + " " + entry.getValue());
         });
 
+        if (cnt==0){
+            start = Event.createTimestamp("08-11-2021","00:00:00.000");
+        }
+        TestClass.start(subscribedSymbols, cnt, start);
 
-        TestClass.start(subscribedSymbols);
         //Consumer.startConsumer(subscribedSymbols);
+        start = Collections.min(subscribedSymbols.values());
 
 
         return new ArrayList<>();

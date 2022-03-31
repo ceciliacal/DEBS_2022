@@ -36,13 +36,17 @@ public class Consumer {
         StreamExecutionEnvironment env = createEnviroment();
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(30)));
 
+        /*
         DataStream<Event> eventDataStream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
-
         Query1.runQuery1(eventDataStream);
 
         env.execute("debsTest");
+
+
+         */
         return null;
+
     }
 
 

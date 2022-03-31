@@ -7,13 +7,13 @@ import org.apache.flink.api.common.functions.MapFunction;
 import static data.Event.createTimestamp;
 
 
-public class MapFunctionEvent implements MapFunction<String, Event> {
+public class MapFunctionEvent implements MapFunction<String[], Event> {
 
     @Override
-    public Event map(String value) throws Exception {
+    public Event map(String[] line) throws Exception {
 
         //System.out.println("value = "+value);
-        String line[] = value.split(",");
+        //String line[] = value.split(",");
         String ts = createTimestamp(line[2],line[3]).toString();
         Event event = new Event(line[0], 0,line[1], ts, Float.parseFloat(line[21]));
         System.out.println("event = "+event.toString());
