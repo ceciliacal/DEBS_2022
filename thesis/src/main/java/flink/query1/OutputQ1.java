@@ -5,6 +5,7 @@ import java.util.Map;
 public class OutputQ1 {
 
     private float lastPrice;
+    //Map<Integer, Float> ema38;
 
     public OutputQ1(float price) {
         this.lastPrice = price;
@@ -38,5 +39,10 @@ public class OutputQ1 {
         this.lastPrice = lastPrice;
     }
 
-
+    @Override
+    public String toString() {
+        return "OutputQ1{" +
+                "lastPrice=" + lastPrice +
+                '}';
+    }
 }

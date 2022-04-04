@@ -57,10 +57,10 @@ public class Producer {
         final String[] valueToSend = new String[1];
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
 
-        Stream<String> FileStream = Files.lines(Paths.get(datasetPath+".csv"));
+        Stream<String> FileStream = Files.lines(Paths.get("ciao"+".csv"));
 
         //todo: calcola n righe da skippare cambiando  il dataset. fai script bash per mettere un file da riga di comando in cartella "dataset"
-        FileStream.skip(4).forEach(line -> {
+        FileStream.skip(0).forEach(line -> {
 
             String[] lineFields = line.split(",");
 
@@ -110,6 +110,14 @@ public class Producer {
                 }
             }
 
+            if (value[0][2].contains("08:00:00")){
+                System.out.println("STO PER FARE SLEEP 20 SEC!!!!");
+                try {
+                    TimeUnit.SECONDS.sleep((long) 20);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
             ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currTs.get(), lineFields[0], valueToSend[0]);
             System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+producerRecord.value());

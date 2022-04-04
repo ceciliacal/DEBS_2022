@@ -1,18 +1,38 @@
 package flink.query1;
 
 import data.Event;
-import kafka.TestClass;
+import kafka.Consumer;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.tuple.Tuple2;
 
-import static data.Event.createTimestamp;
 
-
-public class MapFunctionEvent implements MapFunction<String[], Event> {
+public class MapFunctionEvent implements MapFunction<String, Event> {
 
     @Override
-    public Event map(String[] line) throws Exception {
+    public Event map(String value) throws Exception {
 
-        //System.out.println("value = "+value);
+        System.out.println("value = "+value);
+        String line[] = value.split(",");
+
+        Event event = new Event(line[0], Integer.parseInt(line[4]), line[1],line[2], Float.parseFloat(line[3]), Integer.parseInt(line[5]));
+        event.setEma38(0.0);
+        event.setEma100(0.0);
+
+        if (event.getNumEvent()==0){
+            Consumer.startEndTsPerBatch.put(event.getBatch(), new Tuple2<>(event.getTimestamp(), null));
+        } else if(event.getNumEvent()==999){
+            Consumer.startEndTsPerBatch.get(event.getBatch()).f1 = event.getTimestamp();
+        }
+
+        //System.out.println("event = "+event);
+
+        return event;
+
+    }
+}
+
+/*
+//System.out.println("value = "+value);
         //String line[] = value.split(",");
         String ts = createTimestamp(line[2],line[3]).toString();
         Event event = new Event(line[0], 0,line[1], ts, Float.parseFloat(line[21]));
@@ -30,30 +50,4 @@ public class MapFunctionEvent implements MapFunction<String[], Event> {
 
         event.setEma38(0.0);
         event.setEma100(0.0);
-
-        /*
-        if (Event.myContains(Consumer.batchEvents, line[0], line[1], Event.stringToTimestamp(line[2],0), Float.parseFloat(line[3]))){
-            System.out.println("Consumer.batchEvents SIZE BEFORE FILTER: "+Consumer.batchEvents.size());
-            Optional<Event> retrievedEvent = Event.myGet(Consumer.batchEvents, line[0], line[1], Event.stringToTimestamp(line[2],0), Float.parseFloat(line[3]));
-            System.out.println("Consumer.batchEvents SIZE AFTER FILTER: "+Consumer.batchEvents.size());
-            event = retrievedEvent.get();
-            event.setBatch(1);
-            System.out.println("event IN BATCH = "+event.getSymbol()+", "+event.getBatch()+", "+event.getSecType()+", "+event.getTimestamp()+", "+event.getLastTradePrice());
-
-            Timestamp lastTsInBatch;
-
-        } else {
-
-            event = new Event(line[0], 0,line[1], line[2], Float.parseFloat(line[3]));
-            System.out.println("event NON IN BATCH  = "+event.getSymbol()+", "+event.getBatch()+", "+event.getSecType()+", "+event.getTimestamp()+", "+event.getLastTradePrice());
-        }
-
-        //if eventBatch == 1, allora setta il lastTs
-        //nel primo if: se prova2 contiene quel simbolo, ritorna il lastts
-        //prova2.myGet(evento nel batch)
-
-
-         */
-        return event;
-    }
-}
+ */

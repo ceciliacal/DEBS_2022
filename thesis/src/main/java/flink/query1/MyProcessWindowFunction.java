@@ -1,6 +1,6 @@
 package flink.query1;
 
-import data.Event;
+import kafka.Consumer;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, OutputQ1, String, TimeWindow> {
 
-    private Integer count = 0;
+    private Integer windowCount = 0;
     private float lastPrice = 0;
     public Map<Integer, Float> ema38;
     public Map<Integer, Float> ema100;
@@ -26,17 +26,17 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         lastPrice = res.getLastPrice();
 
 
-        if (count==0){
+        if (windowCount ==0){
             ema38 = new HashMap<>();
             ema100 = new HashMap<>();
         }
 
         //calcolo ema38
-        OutputQ1.calculateEMA(lastPrice, count, 38, ema38);
+        OutputQ1.calculateEMA(lastPrice, windowCount, 38, ema38);
         //calcolo ema100
-        OutputQ1.calculateEMA(lastPrice, count, 100, ema100);
+        OutputQ1.calculateEMA(lastPrice, windowCount, 100, ema100);
 
-        System.out.println("--  IN WINDOWFUNCTION: key = "+s+",  - window start DATE = "+date+ ", count = "+count+", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(count)+",  currEma100 = "+ema100.get(count));
+        System.out.println("--IN PROCESS: key = "+s+",  - window start = "+date+ ", windowCount = "+ windowCount +", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(windowCount)+",  currEma100 = "+ema100.get(windowCount)+",   batchSTART: "+ Consumer.startEndTsPerBatch.get(0).f0+",   batchEND: "+ Consumer.startEndTsPerBatch.get(0).f1);
 
         for (Integer name: ema38.keySet()) {
             String key = name.toString();
@@ -48,10 +48,11 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             String value = ema100.get(name).toString();
             System.out.println("EMA100 window "+s+" "+date+" - K: "+key + " V: " + value);
         }
-        count++;
+        windowCount++;
 
         //per recuperare lastTs per symbol nel batch, magari posso fare una funzione che se gli passo la chiave e l'orario di chiusura di window controlla
 
+        out.collect(res);
 
         //TODO: if orario window == lastTimestamp nel batch, salva i dati in una classe apposita cosi poi li stampi
 

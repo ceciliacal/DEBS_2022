@@ -18,16 +18,17 @@ public class Event {
     float       lastTradePrice;
     Double      ema38;
     Double      ema100;
-    Timestamp   lastBatchTimestamp;
+    Integer     numEvent;
 
 
-    public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice) {
+    public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice, int numEvent) {
         this.symbol = symbol;
         this.batch = batch;
         this.secType = secType;
         this.strTimestamp = strTimestamp;
         this.lastTradePrice = lastTradePrice;
-        this.timestamp = stringToTimestamp(strTimestamp,batch);
+        this.timestamp = stringToTimestamp(strTimestamp,0);
+        this.numEvent = numEvent;
     }
 
     @Override
@@ -41,7 +42,7 @@ public class Event {
                 ", lastTradePrice=" + lastTradePrice +
                 ", ema38=" + ema38 +
                 ", ema100=" + ema100 +
-                ", lastBatchTimestamp=" + lastBatchTimestamp +
+                ", numEvent=" + numEvent +
                 '}';
     }
 
@@ -75,12 +76,12 @@ public class Event {
         this.symbol = symbol;
     }
 
-    public Timestamp getLastBatchTimestamp() {
-        return lastBatchTimestamp;
+    public Integer getNumEvent() {
+        return numEvent;
     }
 
-    public void setLastBatchTimestamp(Timestamp lastBatchTimestamp) {
-        this.lastBatchTimestamp = lastBatchTimestamp;
+    public void setNumEvent(Integer numEvent) {
+        this.numEvent = numEvent;
     }
 
     public String getStrTimestamp() {
