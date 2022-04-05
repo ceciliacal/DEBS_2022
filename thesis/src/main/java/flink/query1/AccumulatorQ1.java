@@ -3,6 +3,8 @@ package flink.query1;
 import data.Event;
 import org.apache.flink.api.common.accumulators.Accumulator;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 * Accumulators collect distributed statistics or aggregates in a from user functions and operators.
@@ -21,24 +23,29 @@ import java.io.Serializable;
 
 public class AccumulatorQ1 implements Serializable {
 
-    private float lastPrice;
+    private Map<String, Float> lastPricePerSymbol;  //K:symbol - V:last price
 
     public AccumulatorQ1(){
-        this.lastPrice = 0;
+        this.lastPricePerSymbol = new HashMap<>();
 
     }
 
     public void add(Event value) {
-        lastPrice = value.getLastTradePrice();
+        if (lastPricePerSymbol==null){
+            lastPricePerSymbol = new HashMap<>();
+            lastPricePerSymbol.put(value.getSymbol(), value.getLastTradePrice());
+        } else {
+            lastPricePerSymbol.put(value.getSymbol(), value.getLastTradePrice());
+        }
 
     }
 
-    public float getLastPrice(){
-        return lastPrice;
+    public Map<String, Float> getLastPrice(){
+        return lastPricePerSymbol;
     }
 
-    public void setLastPrice(float lastPrice) {
-        this.lastPrice = lastPrice;
+    public void setLastPrice(Map<String, Float> lastPrice) {
+        //this.lastPrice = lastPrice;
     }
 }
 

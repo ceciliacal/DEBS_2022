@@ -1,10 +1,8 @@
 package flink.query1;
 
 import data.Event;
-import org.apache.flink.api.common.accumulators.Accumulator;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
-import java.io.Serializable;
 
 public class MyAggregateFunction implements AggregateFunction<Event, AccumulatorQ1, OutputQ1> {
 
@@ -16,9 +14,7 @@ public class MyAggregateFunction implements AggregateFunction<Event, Accumulator
 
     @Override
     public AccumulatorQ1 add(Event value, AccumulatorQ1 accumulator) {
-
-        System.out.println("-- IN AGGREGATE: event = "+value.getSymbol()+" "+value.getSecType()+" "+value.getTimestamp());
-
+        //System.out.println("-- IN AGGREGATE: event = "+value.getSymbol()+" "+value.getSecType()+" "+value.getTimestamp());
         accumulator.add(value);
         return accumulator;
 

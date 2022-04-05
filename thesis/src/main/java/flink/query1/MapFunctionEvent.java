@@ -11,7 +11,7 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
     @Override
     public Event map(String value) throws Exception {
 
-        System.out.println("value = "+value);
+        //System.out.println("value = "+value);
         String line[] = value.split(",");
 
         Event event = new Event(line[0], Integer.parseInt(line[4]), line[1],line[2], Float.parseFloat(line[3]), Integer.parseInt(line[5]));
@@ -24,6 +24,7 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
             Consumer.startEndTsPerBatch.get(event.getBatch()).f1 = event.getTimestamp();
         }
 
+        System.out.println("symbol= "+event.getSymbol());
         //System.out.println("event = "+event);
 
         return event;

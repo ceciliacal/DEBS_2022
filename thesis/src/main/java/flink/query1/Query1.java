@@ -28,6 +28,8 @@ public class Query1 {
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(Event::getSymbol);
 
+        //TODO: vedi maxTimestamp() Method to get the maximum timestamp allowed for a given window.
+
         /*
         Processwindowfunction holds iteratable objects of all elements contained in a window,
         as well as additional meta information of the window to which the element belongs.
@@ -73,6 +75,7 @@ public class Query1 {
 
                  */
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
+                /*
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(15)))
                 .process(new ProcessAllWindowFunction<OutputQ1, String, TimeWindow>() {
 
@@ -96,6 +99,8 @@ public class Query1 {
                         s.close();
                     }
                 })
+
+                 */
                 .print()
                 ;
 
