@@ -7,11 +7,11 @@ import java.util.Map;
 
 public class OutputQ1 {
 
-    private Map<String, Float> lastPrice;
-    private Map<String, Tuple2<Integer, Float>> ema38Result;
-    private Map<String, Tuple2<Integer, Float>> ema100Result;
+    private Map<String, Tuple2<Float, Integer>> lastPrice;   //todo batch in key
+    private Map<Tuple2<String,Integer>, Float> ema38Result;
+    private Map<Tuple2<String,Integer>, Float> ema100Result;
 
-    public OutputQ1(Map<String, Float> price) {
+    public OutputQ1(Map<String, Tuple2<Float, Integer>> price) {
         this.lastPrice = price;
         this.ema38Result = new HashMap<>();
         this.ema100Result = new HashMap<>();
@@ -21,7 +21,6 @@ public class OutputQ1 {
 
         float lastEma;    //retrieve last ema through key (currWindowCount)
         float resEma;
-
 
         if (currWindowCount==0){
             lastEma = 0;
@@ -36,27 +35,19 @@ public class OutputQ1 {
 
    }
 
-    public Map<String, Tuple2<Integer, Float>> getEma38Result() {
+    public Map<Tuple2<String, Integer>, Float> getEma38Result() {
         return ema38Result;
     }
 
-    public void setEma38Result(Map<String, Tuple2<Integer, Float>> ema38Result) {
+    public void setEma38Result(Map<Tuple2<String, Integer>, Float> ema38Result) {
         this.ema38Result = ema38Result;
     }
 
-    public Map<String, Tuple2<Integer, Float>> getEma100Result() {
-        return ema100Result;
-    }
-
-    public void setEma100Result(Map<String, Tuple2<Integer, Float>> ema100Result) {
-        this.ema100Result = ema100Result;
-    }
-
-    public Map<String, Float> getLastPrice() {
+    public Map<String, Tuple2<Float, Integer>> getLastPrice() {
         return lastPrice;
     }
 
-    public void setLastPrice(Map<String, Float> lastPrice) {
+    public void setLastPrice(Map<String, Tuple2<Float, Integer>> lastPrice) {
         this.lastPrice = lastPrice;
     }
 

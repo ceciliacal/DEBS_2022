@@ -2,6 +2,8 @@ package flink.query1;
 
 import data.Event;
 import org.apache.flink.api.common.accumulators.Accumulator;
+import scala.Tuple2;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +25,8 @@ import java.util.Map;
 
 public class AccumulatorQ1 implements Serializable {
 
-    private Map<String, Float> lastPricePerSymbol;  //K:symbol - V:last price
+    //todo: qui x traccia BATCH Metti che value è una tupla2 di lastprice+ batchNumber
+    private Map<String, Tuple2<Float, Integer>> lastPricePerSymbol;  //K:symbol - V:last price
 
     public AccumulatorQ1(){
         this.lastPricePerSymbol = new HashMap<>();
@@ -31,16 +34,15 @@ public class AccumulatorQ1 implements Serializable {
     }
 
     public void add(Event value) {
+
         if (lastPricePerSymbol==null){
             lastPricePerSymbol = new HashMap<>();
-            lastPricePerSymbol.put(value.getSymbol(), value.getLastTradePrice());
-        } else {
-            lastPricePerSymbol.put(value.getSymbol(), value.getLastTradePrice());
         }
+        lastPricePerSymbol.put(value.getSymbol(), new Tuple2<>(value.getLastTradePrice(), value.getBatch()));
 
     }
 
-    public Map<String, Float> getLastPrice(){
+    public Map<String, Tuple2<Float, Integer>>  getLastPrice(){
         return lastPricePerSymbol;
     }
 

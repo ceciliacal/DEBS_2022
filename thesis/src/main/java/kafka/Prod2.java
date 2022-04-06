@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Prod2 {
 
+    private static final Integer windowLen = 5; //minutes
+
     /*
     creates kafka producer
      */
@@ -75,13 +77,140 @@ public class Prod2 {
 
         //Process the events
         int cnt = 0;
+        int i;
+        long currSeconds;
+        int num;
+        long start;
+        Timestamp nextWindow = null;
+        long next = 0;
+        Timestamp windowToFire = null;
+        SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
+
+        //TODO: porta socket 6666+cnt
+
+
+
         while(true) {
+            //ServerSocket ss = new ServerSocket(6667);
+            System.out.println("==== cnt: "+cnt);
             Batch batch = challengeClient.nextBatch(newBenchmark);
+            num = batch.getEventsCount();
+
             if (batch.getLast()) { //Stop when we get the last batch
                 System.out.println("Received lastbatch, finished!");
                 break;
             }
 
+
+            //=======GESTIONEFINESTRE========
+            if (cnt==0){
+                start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
+                next = start;
+                next = next + TimeUnit.MINUTES.toMillis(windowLen);
+                nextWindow = new Timestamp(next);
+                System.out.println("nextWindow = "+nextWindow);
+            }
+
+
+            Timestamp lastTsThisBatch = new Timestamp(batch.getEvents(num-1).getLastTrade().getSeconds() * 1000L);
+            System.out.println("lastTsThisBatch = "+lastTsThisBatch);
+
+            if (lastTsThisBatch.compareTo(nextWindow)>0){
+                //todo caso =.  chiama funzione che calcola finestra che produce i risultati. se è minore di next window, allora risultati vengono prodotti alla next window
+                windowToFire = windowProducingResult(lastTsThisBatch, nextWindow);
+                System.out.println("windowToFire= "+windowToFire);
+            }
+            if (windowToFire.compareTo(nextWindow)<0){
+                windowToFire = nextWindow;
+            }
+
+
+            //=======FINE GESTIONEFINESTRE========
+
+
+
+
+            //===========SEND=================
+
+            String[][] value = {new String[6]};
+            final String[] valueToSend = new String[1];
+            int flag = 0;
+
+            for (i=0;i<num;i++){
+
+                currSeconds = batch.getEvents(i).getLastTrade().getSeconds();
+                Timestamp lastTradeTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
+                assert lastTradeTimestamp != null;
+
+
+                //todo check rispetto a next
+                System.out.println("cnt = "+cnt+" lastTradeTimestamp: "+lastTradeTimestamp+" nextWindow: "+nextWindow);
+                if (lastTradeTimestamp.compareTo(nextWindow)==0 || lastTradeTimestamp.compareTo(windowToFire)==0){
+                    if(flag==0){
+                        next = next + TimeUnit.MINUTES.toMillis(windowLen);
+                        nextWindow = new Timestamp(next);
+                        //calculateIndicators()
+                        System.out.println("NELL IF ");
+                        System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
+                        System.out.println("nextWindow: "+nextWindow);
+                        System.out.println("windowToFire: "+windowToFire);
+
+                        TimeUnit.SECONDS.sleep(2);
+                        flag = 1;   //todo: pensa a modo per fare flag
+
+                        /*
+                        //ServerSocket ss = new ServerSocket(6667);
+                        Socket s = ss.accept();
+
+                        DataInputStream dis = new DataInputStream(s.getInputStream());
+                        String str = (String) dis.readUTF();
+                        System.out.println("message = "+str);
+
+                        //ss.close();
+
+                         */
+
+
+
+
+                    }
+                }
+
+                if (lastTradeTimestamp.compareTo(nextWindow)==0){
+                    flag = 0;
+                }
+
+
+
+
+                value[0][0] = batch.getEvents(i).getSymbol();
+                value[0][1] = String.valueOf(batch.getEvents(i).getSecurityType());
+                value[0][2] = String.valueOf(lastTradeTimestamp);
+                value[0][3] = String.valueOf(batch.getEvents(i).getLastTradePrice());
+                value[0][4] = String.valueOf(cnt);     //batch number
+                value[0][5] = String.valueOf(i);       //event number inside of current batch
+                valueToSend[0] = String.join(",", value[0]);
+
+                ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, lastTradeTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
+                System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+ producerRecord.value());
+
+                producer.send(producerRecord, (metadata, exception) -> {
+                    if(metadata != null){
+                        //successful writes
+                        //System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                    }
+                    else{
+                        //unsuccessful writes
+                        System.out.println("Error Sending Csv Record -> key: " + producerRecord.key()+" value: " + producerRecord.value());
+                    }
+                });
+
+            }
+            //ss.close();
+
+            //=============ENDSEND===========0
+
+/*
             //process the batch of events we have
             List<Indicator> q1Results = null;
             q1Results = calculateIndicators(batch, cnt, producer);
@@ -96,7 +225,7 @@ public class Prod2 {
             //return the result of Q1
             challengeClient.resultQ1(q1Result);
 
-/*
+
             var crossOverevents = calculateCrossoverEvents(batch);
 
             ResultQ2 q2Result = ResultQ2.newBuilder()
@@ -121,12 +250,27 @@ public class Prod2 {
         System.out.println("ended Benchmark");
 
 
+
+
         producer.close();
 
     }
 
+    public static Timestamp windowProducingResult(Timestamp lastTs,Timestamp nextWindow){
+        long res = nextWindow.getTime();
+        while(true){
+            res = res + TimeUnit.MINUTES.toMillis(windowLen);
+            System.out.println("res = "+new Timestamp(res));
+            if (lastTs.compareTo(new Timestamp(res))<0){
+                break;
+            }
+        }
+        return new Timestamp(res);
+    }
+
     public static List<Indicator> calculateIndicators(Batch batch, int cnt, Producer<String, String> producer) throws IOException, InterruptedException {
 
+        /*
         int i;
         Long seconds;
         int num = batch.getEventsCount();
@@ -174,7 +318,7 @@ public class Prod2 {
         }
 
 
-        /*
+
         //ServerSocket ss = new ServerSocket(6667);
         Socket s = ss.accept();
 
@@ -182,7 +326,7 @@ public class Prod2 {
         String str = (String) dis.readUTF();
         System.out.println("message = "+str);
 
-         */
+
 
 
 
@@ -191,9 +335,10 @@ public class Prod2 {
 
         //TimeUnit.SECONDS.sleep(10);
 
+         */
         return new ArrayList<>();
-    }
 
+    }
 
 
     public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
@@ -202,7 +347,35 @@ public class Prod2 {
         return new ArrayList<>();
     }
 
+    public static Timestamp stringToTimestamp(String strDate, int invoker){
+
+        SimpleDateFormat dateFormat = null;
+
+        if (invoker==0){
+            dateFormat = new SimpleDateFormat(Config.pattern2);
+        } else {
+            dateFormat = new SimpleDateFormat(Config.pattern);
+        }
+
+        try {
+            Date parsedDate = dateFormat.parse(strDate);
+            Timestamp timestamp = new Timestamp(parsedDate.getTime());
+            /*
+            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
+            System.out.println("parsedDate = "+parsedDate);
+            System.out.println("strDate = "+strDate);
+             */
+            return timestamp;
+        } catch(Exception e) {
+            //error
+            return null;
+        }
+
+    }
+
 }
+
+
 
     /*
         //before processing ============= INVIO DEI DATI FINO AL BATCH CORRENTE A KAFKA =============

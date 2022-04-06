@@ -4,10 +4,8 @@ import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import data.Event;
-import kafka.Consumer;
-import kafka.TestClass;
 import subscription.challenge.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -16,9 +14,12 @@ import utils.Config;
 
 public class Main {
 
-    public static Timestamp start;
+    private static long start;
+    private static final Integer windowLen = 5; //minutes
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSSS");
 
         ManagedChannel channel = ManagedChannelBuilder
                 .forAddress("challenge.msrg.in.tum.de", 5023)
@@ -42,6 +43,8 @@ public class Main {
 
         //Create a new Benchmark
         Benchmark newBenchmark = challengeClient.createNewBenchmark(bc);
+        int num;
+        Date nextWindow;
 
         //Start the benchmark
         challengeClient.startBenchmark(newBenchmark);
@@ -49,19 +52,35 @@ public class Main {
         //Process the events
         int cnt = 0;
         while(true) {
+
+            //todo: mesa roba sopra la devo mettere qui in un if cnt ==0
+
+            //while (batch(num)! next window
+
             Batch batch = challengeClient.nextBatch(newBenchmark);
+            num = batch.getEventsCount();
             if (batch.getLast()) { //Stop when we get the last batch
                 System.out.println("Received lastbatch, finished!");
                 break;
             }
 
+            if (cnt==0){
+                start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
+                nextWindow = new Date(start + TimeUnit.MINUTES.toMillis((long) windowLen *(cnt+1)));
+            }
+
+            //nextWindow = new Date(nextWindow + TimeUnit.MINUTES.toMillis((long) windowLen *(cnt+1)));
+
+
+
+
+
+
+            //TODO: while date(num) < next window, manda dati e poi dopo chiamo list indicator, gli passo ultimo batch e aspetta con la socket
             //process the batch of events we have
             List<Indicator> q1Results = null;
-            try {
-                q1Results = calculateIndicators(batch, cnt);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            q1Results = calculateIndicators(batch, cnt);
+
 
             ResultQ1 q1Result = ResultQ1.newBuilder()
                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
@@ -86,10 +105,11 @@ public class Main {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
+
 
         challengeClient.endBenchmark(newBenchmark);
         System.out.println("ended Benchmark");
@@ -99,35 +119,25 @@ public class Main {
     //cnt: # of batch
     public static List<Indicator> calculateIndicators(Batch batch, int cnt) throws Exception {
 
-        Long seconds;
+        FileWriter myWriter = new FileWriter("batch_"+cnt+".txt");
+
+        SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
         int i;
         int num = batch.getEventsCount();
-        SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
-        Map<String, Timestamp> subscribedSymbols = new HashMap<>();
+        long seconds;
 
+        for (i=0; i<num; i++) {
 
-        if (batch == null){
-            return new ArrayList<>();
-        }
-
-        for (i=0;i<num;i++){
+            myWriter.write("----------- i = " + i + " -----------\n");
+            myWriter.write("getSymbol = " + batch.getEvents(i).getSymbol()+"\n");
+            myWriter.write("getLastTradePrice = " + batch.getEvents(i).getLastTradePrice()+"\n");
             seconds = batch.getEvents(i).getLastTrade().getSeconds();
-            subscribedSymbols.put(batch.getEvents(i).getSymbol(), Event.stringToTimestamp(formatter.format(new Date(seconds * 1000L)),1));
+            //myWriter.write("seconds = " + seconds+"\n");
+            String dateString = formatter.format(new Date(seconds * 1000L));
+            myWriter.write("dateString = " + dateString+"\n");
         }
+        myWriter.close();
 
-
-        System.out.println("===================subscribedSymbols: ");
-        subscribedSymbols.entrySet().forEach(entry -> {
-            System.out.println(entry.getKey() + " " + entry.getValue());
-        });
-
-        if (cnt==0){
-            start = Event.createTimestamp("08-11-2021","00:00:00.000");
-        }
-        TestClass.start(subscribedSymbols, cnt, start);
-
-        //Consumer.startConsumer(subscribedSymbols);
-        start = Collections.min(subscribedSymbols.values());
 
 
         return new ArrayList<>();
@@ -150,4 +160,32 @@ public class Main {
 
         return new ArrayList<>();
     }
+
+
+    public static Timestamp stringToTimestamp(String strDate, int invoker){
+
+        SimpleDateFormat dateFormat = null;
+
+        if (invoker==0){
+            dateFormat = new SimpleDateFormat(Config.pattern2);
+        } else {
+            dateFormat = new SimpleDateFormat(Config.pattern);
+        }
+
+        try {
+            Date parsedDate = dateFormat.parse(strDate);
+            Timestamp timestamp = new Timestamp(parsedDate.getTime());
+            /*
+            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
+            System.out.println("parsedDate = "+parsedDate);
+            System.out.println("strDate = "+strDate);
+             */
+            return timestamp;
+        } catch(Exception e) {
+            //error
+            return null;
+        }
+
+    }
+
 }

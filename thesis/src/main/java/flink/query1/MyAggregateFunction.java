@@ -28,7 +28,6 @@ public class MyAggregateFunction implements AggregateFunction<Event, Accumulator
 
     @Override
     public AccumulatorQ1 merge(AccumulatorQ1 a, AccumulatorQ1 b) {
-        a.setLastPrice(b.getLastPrice());
         return a;
     }
 
