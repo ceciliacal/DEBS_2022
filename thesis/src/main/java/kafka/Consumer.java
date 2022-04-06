@@ -102,10 +102,10 @@ public class Consumer {
     public static void main(String[] args) throws Exception {
 
         FlinkKafkaConsumer<String> consumer = createConsumer();
-        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(15)));
+        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(1)));
         StreamExecutionEnvironment env = createEnviroment();
 
-        startEndTsPerBatch = new HashMap<>();
+        //startEndTsPerBatch = new HashMap<>();
 
 
         DataStream<Event> stream = env.addSource(consumer)
@@ -131,7 +131,7 @@ public class Consumer {
                 })
 
                  */
-                //.print();
+        //.print();
 
         env.execute("debsTest");
 

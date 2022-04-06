@@ -18,11 +18,13 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
     @Override
     public void process(String s, ProcessWindowFunction<OutputQ1, OutputQ1, String, TimeWindow>.Context context, Iterable<OutputQ1> elements, Collector<OutputQ1> out) throws Exception {
 
+
         Date windowStartDate = new Date();
         windowStartDate.setTime(context.window().getStart());
         OutputQ1 res = elements.iterator().next();
         Map<String, Float> lastPrice = res.getLastPrice();
 
+        System.out.println("windowstart: "+windowStartDate);
         //todo: stessa cosa per last price
         if (count==null){
             count = new HashMap<>();
@@ -60,16 +62,15 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         //System.out.println("--IN PROCESS: key = "+s+",  - window start = "+date+ ", count = "+ windowCount +", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(windowCount)+",  currEma100 = "+ema100.get(windowCount)+",   batchSTART: "+ Consumer.startEndTsPerBatch.get(0).f0+",   batchEND: "+ Consumer.startEndTsPerBatch.get(0).f1);
 
-
+/*
         for (Tuple2<String, Integer> name: myEma38.keySet()) {
             if (name._1.equals(s)){
                 String key = name.toString();
                 String value = myEma38.get(name).toString();
                 System.out.println("EMA38 window "+s+" "+windowStartDate+" - K: "+key +"   V: " + value);
             }
-
         }
-        /*
+
         for (Integer name: ema100.keySet()) {
             String key = name.toString();
             String value = ema100.get(name).toString();
@@ -78,6 +79,18 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
          */
 
+        Map<String, Tuple2<Integer, Float>> res38 = new HashMap<>();
+        for (Tuple2<String, Integer> SymbolWindow: myEma38.keySet()) {
+            if (SymbolWindow._1.equals(s)){
+                String key = SymbolWindow.toString();
+                String value = myEma38.get(SymbolWindow).toString();
+                System.out.println("EMA38 window "+s+" "+windowStartDate+" - K: "+key +"   V: " + value);
+                res38.put(s, new Tuple2<>(SymbolWindow._2, myEma38.get(SymbolWindow)));
+            }
+        }
+
+
+        res.setEma38Result(res38);
 
         out.collect(res);
 

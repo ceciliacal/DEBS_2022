@@ -18,13 +18,7 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
         event.setEma38(0.0);
         event.setEma100(0.0);
 
-        if (event.getNumEvent()==0){
-            Consumer.startEndTsPerBatch.put(event.getBatch(), new Tuple2<>(event.getTimestamp(), null));
-        } else if(event.getNumEvent()==999){
-            Consumer.startEndTsPerBatch.get(event.getBatch()).f1 = event.getTimestamp();
-        }
-
-        System.out.println("symbol= "+event.getSymbol());
+        //System.out.println("symbol= "+event.getSymbol());
         //System.out.println("event = "+event);
 
         return event;

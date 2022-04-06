@@ -13,6 +13,7 @@ import subscription.challenge.*;
 import utils.Config;
 
 import java.io.DataInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -111,7 +112,7 @@ public class Prod2 {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 1) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
@@ -173,12 +174,15 @@ public class Prod2 {
         }
 
 
+        /*
         //ServerSocket ss = new ServerSocket(6667);
         Socket s = ss.accept();
 
         DataInputStream dis = new DataInputStream(s.getInputStream());
         String str = (String) dis.readUTF();
         System.out.println("message = "+str);
+
+         */
 
 
 
