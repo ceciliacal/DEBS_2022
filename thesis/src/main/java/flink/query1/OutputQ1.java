@@ -2,19 +2,17 @@ package flink.query1;
 
 import scala.Tuple2;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class OutputQ1 {
 
-    private Map<String, Tuple2<Float, Integer>> lastPrice;   //todo batch in key
+    private Map<String, Tuple2<Float, Integer>> lastPrice;   //simbolo, prezzo+batch
     private Map<Tuple2<String,Integer>, Float> ema38Result;
     private Map<Tuple2<String,Integer>, Float> ema100Result;
 
     public OutputQ1(Map<String, Tuple2<Float, Integer>> price) {
         this.lastPrice = price;
-        this.ema38Result = new HashMap<>();
-        this.ema100Result = new HashMap<>();
+
     }
 
     public static Map<Tuple2<String,Integer>, Float> calculateEMA(String s, Float lastPrice, int currWindowCount, int j, Map<Tuple2<String,Integer>, Float> myEma38){

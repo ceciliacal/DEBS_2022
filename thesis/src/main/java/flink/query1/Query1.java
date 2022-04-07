@@ -19,6 +19,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 
@@ -39,12 +40,23 @@ public class Query1 {
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(5)))
-                .process(new ProcessAllWindowFunction<OutputQ1, String, TimeWindow>() {
+                .process(new ProcessAllWindowFunction<Out1, Out1, TimeWindow>() {
                     @Override
-                    public void process(ProcessAllWindowFunction<OutputQ1, String, TimeWindow>.Context context, Iterable<OutputQ1> elements, Collector<String> out) throws Exception {
+                    public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
 
                         System.out.println("procALL-ouputQ1: "+elements.iterator().next());
-                        OutputQ1 res = elements.iterator().next();
+                        System.out.println("---iterator: "+elements.iterator());
+
+
+                        Iterator<Out1> itr=elements.iterator();
+
+                        while(itr.hasNext())
+                        {
+                            System.out.println(new Date(context.window().getStart())+" "+itr.next());
+                        }
+
+                        Out1 res = elements.iterator().next();
+                        //out.collect(res);
                         //System.out.println(elements.forEach(o -> o.getEma38Result()));
 
 

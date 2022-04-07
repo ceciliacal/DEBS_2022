@@ -8,20 +8,23 @@ import scala.Tuple2;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
-public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, OutputQ1, String, TimeWindow> {
+public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out1, String, TimeWindow> {
 
     private Map<String, Integer> count;  //counts number of current window per symbol
     private Map<Tuple2<String,Integer>,Float> myEma38;   //K: <symbol,countWindow> - V: ema
     private Map<Tuple2<String,Integer>,Float> myEma100;
 
     @Override
-    public void process(String s, ProcessWindowFunction<OutputQ1, OutputQ1, String, TimeWindow>.Context context, Iterable<OutputQ1> elements, Collector<OutputQ1> out) throws Exception {
+    public void process(String s, ProcessWindowFunction<OutputQ1, Out1, String, TimeWindow>.Context context, Iterable<OutputQ1> elements, Collector<Out1> out) throws Exception {
 
         Date windowStartDate = new Date();
         windowStartDate.setTime(context.window().getStart());
         OutputQ1 res = elements.iterator().next();
-        Map<String, Tuple2<Float, Integer>>  lastPrice = res.getLastPrice();
+        Map<String, Tuple2<Float, Integer>> priceAndBatch = res.getLastPrice();     //per symbol (key String)
+
+        //System.out.println("res size = "+elements.iterator().hasNext());
 
         //System.out.println("windowstart: "+windowStartDate);
         if (count==null){
@@ -40,7 +43,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         }
 
-        System.out.println("FINAL: k= "+s+" v= "+count.get(s)+"  "+windowStartDate);
+        //System.out.println("FINAL: k= "+s+" v= "+count.get(s)+"  "+windowStartDate);
 
 
         if (myEma38==null){
@@ -54,11 +57,44 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         //calcolo ema38
-        OutputQ1.calculateEMA(s,lastPrice.get(s)._1, count.get(s), 38, myEma38);
+        OutputQ1.calculateEMA(s,priceAndBatch.get(s)._1, count.get(s), 38, myEma38);
         //calcolo ema100
-        OutputQ1.calculateEMA(s, lastPrice.get(s)._1, count.get(s), 100, myEma100);
+        OutputQ1.calculateEMA(s, priceAndBatch.get(s)._1, count.get(s), 100, myEma100);
 
         //System.out.println("--IN PROCESS: key = "+s+",  - window start = "+date+ ", count = "+ windowCount +", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(windowCount)+",  currEma100 = "+ema100.get(windowCount)+",   batchSTART: "+ Consumer.startEndTsPerBatch.get(0).f0+",   batchEND: "+ Consumer.startEndTsPerBatch.get(0).f1);
+
+
+        Map<String, Tuple2<Integer,Float>> aiuto = new HashMap<>();
+
+        aiuto.put(s, new Tuple2<>(count.get(s),myEma38.get(new Tuple2<>(s,count.get(s)))));
+
+
+        for (Tuple2<String, Integer> symbolWindow: myEma38.keySet()) {
+
+
+            if (symbolWindow._1.equals(s)){
+                String key = symbolWindow.toString();
+                String value = myEma38.get(symbolWindow).toString();
+                //System.out.println("EMA38 window "+s+" "+windowStartDate+" - K: "+key +"   V: " + value);
+
+                //aiuto.put(s, new Tuple2<>(symbolWindow._2,Float.valueOf(value)));
+
+            }
+        }
+
+
+        //System.out.println("myEma38 = "+myEma38);
+        //System.out.println("aiuto = "+aiuto);
+
+        Out1 bho = new Out1(priceAndBatch.get(s)._2, aiuto);
+        System.out.println("bho = "+bho);
+        out.collect(bho);
+
+
+
+       // System.out.println("proc- res: "+res.getEma38Result());
+
+
 
 /*
         for (Tuple2<String, Integer> name: myEma38.keySet()) {
@@ -77,21 +113,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
          */
 
-        //Map<Tuple2<String, Integer>, Float> res38 = new HashMap<>();
-        Map<Tuple2<String, Integer>, Float> res38 = res.getEma38Result();
-        //res38 = myEma38;
-        res.setEma38Result(myEma38);
-        for (Tuple2<String, Integer> symbolWindow: myEma38.keySet()) {
-            if (symbolWindow._1.equals(s)){
-                String key = symbolWindow.toString();
-                String value = myEma38.get(symbolWindow).toString();
-                System.out.println("EMA38 window "+s+" "+windowStartDate+" - K: "+key +"   V: " + value);
-                res38.put(symbolWindow, Float.valueOf(value));
-                //res38.put(new Tuple2<>(s, SymbolWindow._2), myEma38.get(SymbolWindow));
-            }
-        }
 
-        System.out.println("proc- res: "+res);
+
 
         //todo NON DEVO FARE SET MA AGGIUNGERLA A QUELLA GIA ESISTENTE!
         //Map<Tuple2<String, Integer>, Float> bho38 = res.getEma38Result();
@@ -99,8 +122,10 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         //res.setEma38Result(res38);
 
-        out.collect(res);
+        //out.collect(res);
 
 
     }
+
+
 }
