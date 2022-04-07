@@ -23,7 +23,7 @@ public class MyAggregateFunction implements AggregateFunction<Event, Accumulator
     @Override
     public OutputQ1 getResult(AccumulatorQ1 accumulator) {
         //System.out.println("STO IN AGGREGATE GET RESULT!!!!!!");
-        return new OutputQ1(accumulator.getLastPrice());
+        return new OutputQ1(accumulator.getLastPricePerSymbol(), accumulator.getBatchCurrSymbol());
     }
 
     @Override

@@ -8,7 +8,6 @@ import scala.Tuple2;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out1, String, TimeWindow> {
 
@@ -22,8 +21,9 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         Date windowStartDate = new Date();
         windowStartDate.setTime(context.window().getStart());
         OutputQ1 res = elements.iterator().next();
-        Map<String, Tuple2<Float, Integer>> priceAndBatch = res.getLastPrice();     //per symbol (key String)
-
+        //Map<String, Tuple2<Float, Integer>> priceAndBatch = res.getLastPrice();     //per symbol (key String)
+        Map<String, Float> lastPricePerSymbol = res.getLastPrice();
+        Map<String, Integer> currBatch = res.getCurrBatch();
         //System.out.println("res size = "+elements.iterator().hasNext());
 
         //System.out.println("windowstart: "+windowStartDate);
@@ -57,9 +57,9 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         //calcolo ema38
-        OutputQ1.calculateEMA(s,priceAndBatch.get(s)._1, count.get(s), 38, myEma38);
+        OutputQ1.calculateEMA(s,lastPricePerSymbol.get(s), count.get(s), 38, myEma38);
         //calcolo ema100
-        OutputQ1.calculateEMA(s, priceAndBatch.get(s)._1, count.get(s), 100, myEma100);
+        OutputQ1.calculateEMA(s, lastPricePerSymbol.get(s), count.get(s), 100, myEma100);
 
         //System.out.println("--IN PROCESS: key = "+s+",  - window start = "+date+ ", count = "+ windowCount +", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(windowCount)+",  currEma100 = "+ema100.get(windowCount)+",   batchSTART: "+ Consumer.startEndTsPerBatch.get(0).f0+",   batchEND: "+ Consumer.startEndTsPerBatch.get(0).f1);
 
@@ -86,7 +86,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         //System.out.println("myEma38 = "+myEma38);
         //System.out.println("aiuto = "+aiuto);
 
-        Out1 bho = new Out1(priceAndBatch.get(s)._2, aiuto);
+        Out1 bho = new Out1(currBatch.get(s), aiuto);  //todo batch è ZERO!
         System.out.println("bho = "+bho);
         out.collect(bho);
 

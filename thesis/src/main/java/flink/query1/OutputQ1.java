@@ -6,12 +6,14 @@ import java.util.Map;
 
 public class OutputQ1 {
 
-    private Map<String, Tuple2<Float, Integer>> lastPrice;   //simbolo, prezzo+batch
+    private Map<String, Float> lastPrice;   //simbolo, prezzo+batch
+    private Map<String, Integer> currBatch;
     private Map<Tuple2<String,Integer>, Float> ema38Result;
     private Map<Tuple2<String,Integer>, Float> ema100Result;
 
-    public OutputQ1(Map<String, Tuple2<Float, Integer>> price) {
+    public OutputQ1(Map<String, Float> price, Map<String, Integer> batch) {
         this.lastPrice = price;
+        this.currBatch = batch;
 
     }
 
@@ -41,12 +43,28 @@ public class OutputQ1 {
         this.ema38Result = ema38Result;
     }
 
-    public Map<String, Tuple2<Float, Integer>> getLastPrice() {
+    public Map<String, Float> getLastPrice() {
         return lastPrice;
     }
 
-    public void setLastPrice(Map<String, Tuple2<Float, Integer>> lastPrice) {
+    public void setLastPrice(Map<String, Float> lastPrice) {
         this.lastPrice = lastPrice;
+    }
+
+    public Map<String, Integer> getCurrBatch() {
+        return currBatch;
+    }
+
+    public void setCurrBatch(Map<String, Integer> currBatch) {
+        this.currBatch = currBatch;
+    }
+
+    public Map<Tuple2<String, Integer>, Float> getEma100Result() {
+        return ema100Result;
+    }
+
+    public void setEma100Result(Map<Tuple2<String, Integer>, Float> ema100Result) {
+        this.ema100Result = ema100Result;
     }
 
     @Override

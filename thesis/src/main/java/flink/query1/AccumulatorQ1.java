@@ -27,12 +27,14 @@ public class AccumulatorQ1 implements Serializable {
 
     //todo: qui x traccia BATCH Metti che value è una tupla2 di lastprice+ batchNumber
     //private Map<Tuple2<String,Integer>, Float> lastPricePerSymbol;  //K:symbol - V:last price
-    private Map<String, Tuple2<Float, Integer>> lastPricePerSymbol;  //K:symbol - V:last price
+    private Map<String, Float> lastPricePerSymbol;  //K:symbol - V:last price
+    private Map<String, Integer> batchCurrSymbol;   //K:symbol - V:batch number
     //private Map<Tuple2<String,Integer>, Float> lastPricePerSymbol2;  //K:symbol - V:last price
 
 
     public AccumulatorQ1(){
         this.lastPricePerSymbol = new HashMap<>();
+        this.batchCurrSymbol = new HashMap<>();
 
     }
 
@@ -40,19 +42,31 @@ public class AccumulatorQ1 implements Serializable {
 
         if (lastPricePerSymbol==null){
             lastPricePerSymbol = new HashMap<>();
+            batchCurrSymbol = new HashMap<>();
         }
         //TODO METTI COME CHIAVE SIMBOLO E BATCH!!!
-        lastPricePerSymbol.put(value.getSymbol(),new Tuple2<>(value.getLastTradePrice(),value.getBatch()));
+        lastPricePerSymbol.put(value.getSymbol(), value.getLastTradePrice());
+        batchCurrSymbol.put(value.getSymbol(), value.getBatch());
+        //lastPricePerSymbol.put(value.getSymbol(),new Tuple2<>(value.getLastTradePrice(),value.getBatch()));
         //System.out.println("ADDacc = "+value.getSymbol());
 
     }
 
-    public Map<String, Tuple2<Float, Integer>>  getLastPrice(){
+
+    public Map<String, Float> getLastPricePerSymbol() {
         return lastPricePerSymbol;
     }
 
-    public void setLastPrice(Map<String, Float> lastPrice) {
-        //this.lastPrice = lastPrice;
+    public void setLastPricePerSymbol(Map<String, Float> lastPricePerSymbol) {
+        this.lastPricePerSymbol = lastPricePerSymbol;
+    }
+
+    public Map<String, Integer> getBatchCurrSymbol() {
+        return batchCurrSymbol;
+    }
+
+    public void setBatchCurrSymbol(Map<String, Integer> batchCurrSymbol) {
+        this.batchCurrSymbol = batchCurrSymbol;
     }
 }
 
