@@ -8,10 +8,12 @@ public class Out1 {
 
     private Integer batchNum;
     private Map<String, Tuple2<Integer,Float>> symbol_WindowEma;
+    private Float price;
 
-    public Out1(Integer batch, Map<String, Tuple2<Integer,Float>> symbolWindow_ema) {
+    public Out1(Integer batch, Map<String, Tuple2<Integer,Float>> symbolWindow_ema, float price) {
         this.batchNum = batch;
         this.symbol_WindowEma = symbolWindow_ema;
+        this.price = price;
     }
 
     public Integer getBatchNum() {
@@ -34,7 +36,8 @@ public class Out1 {
     public String toString() {
         return "Out1{" +
                 "batchNum=" + batchNum +
-                ", symbolWindow_ema=" + symbol_WindowEma +
+                ", symbol_WindowEma=" + symbol_WindowEma +
+                ", price=" + price +
                 '}';
     }
 }

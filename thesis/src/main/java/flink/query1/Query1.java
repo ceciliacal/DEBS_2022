@@ -5,15 +5,18 @@ import data.Event;
 import kafka.Consumer;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import scala.Tuple2;
 
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -30,14 +33,23 @@ public class Query1 {
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(Event::getSymbol);
 
+        KeyedStream<Event, Tuple2<String, Integer>> stream2 =
+                stream.keyBy(new KeySelector<Event, Tuple2<String, Integer>>() {
+                    @Override
+                    public Tuple2<String, Integer> getKey(Event value) throws Exception {
+                        return new Tuple2<>(value.getSymbol(), value.getBatch());
+                    }
+                });
+
         //TODO: TIENI TRACCIA DEI BATCH PER I RISULTATI!!!
 
         /*
         Processwindowfunction holds iteratable objects of all elements contained in a window,
         as well as additional meta information of the window to which the element belongs.
          */
-        keyedStream
+        stream2
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(5)))
                 .process(new ProcessAllWindowFunction<Out1, Out1, TimeWindow>() {
