@@ -25,10 +25,10 @@ public class OutputQ1 {
         if (currWindowCount==0){
             lastEma = 0;
         } else {
-            //todo: e se un simbolo stava in due finestre prima????
             if (myEma38.containsKey(new Tuple2<>(s, currWindowCount-1))){
                 lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-1));
             } else {
+                //todo: e se un simbolo stava in due finestre prima????
                 lastEma = 0;
             }
         }

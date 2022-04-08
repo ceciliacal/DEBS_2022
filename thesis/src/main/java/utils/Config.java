@@ -16,6 +16,8 @@ public interface Config {
     public static Double accTime = 0.0;
     public static String pattern = "dd-MM-yyyy HH:mm:ss.SSSS";
     public static String pattern2 = "yyyy-MM-dd HH:mm:ss.SSSS";
+    public static String buyAdvise = "BUY";
+    public static String sellAdvise = "SELL";
 
 }
 

@@ -55,6 +55,7 @@ public class Out1 {
         return "Out1{" +
                 "batchNum=" + batchNum +
                 ", symbol_WindowEma38=" + symbol_WindowEma38 +
+                ", symbol_WindowEma100=" + symbol_WindowEma100 +
                 ", price=" + price +
                 '}';
     }

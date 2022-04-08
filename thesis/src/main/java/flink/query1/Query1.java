@@ -56,16 +56,13 @@ public class Query1 {
                     @Override
                     public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
 
-                        //System.out.println("procALL-ouputQ1: "+elements.iterator().next());
-                        //System.out.println("---iterator: "+elements.iterator());
 
 
-                        Iterator<Out1> itr=elements.iterator();
-
-                        while(itr.hasNext())
-                        {
-                            System.out.println(new Date(context.window().getStart())+" "+itr.next());
+                        for (Out1 element : elements) {
+                            System.out.println(new Date(context.window().getStart()) + " " + element);
                         }
+
+
 
                         Out1 res = elements.iterator().next();
                         //out.collect(res);
