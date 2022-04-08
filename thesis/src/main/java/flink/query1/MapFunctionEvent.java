@@ -15,6 +15,11 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
         String line[] = value.split(",");
 
         Event event = new Event(line[0], Integer.parseInt(line[4]), line[1],line[2], Float.parseFloat(line[3]), Integer.parseInt(line[5]));
+
+        if (event.getBatch()==0&&event.getNumEvent()==0){
+            Consumer.setStartTime(event.getTimestamp().getTime());
+        }
+
         event.setEma38(0.0);
         event.setEma100(0.0);
 

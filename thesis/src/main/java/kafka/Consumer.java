@@ -7,7 +7,6 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -20,6 +19,7 @@ import org.apache.flink.streaming.connectors.kafka.KafkaSerializationSchema;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import scala.Tuple2;
 import subscription.challenge.Indicator;
 import utils.Config;
 import data.Event;
@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
 public class Consumer {
 
     public static Map<Integer, Tuple2<Timestamp, Timestamp>> startEndTsPerBatch;
-    public static Timestamp startBatchTs;
+    private static long startTime;
+    //private static Map<Tuple2<String,Integer>,Float> myEma38;   //K: <symbol,countWindow> - V: ema
     public static Timestamp endBatchTs;
 
 /*
@@ -70,6 +71,13 @@ public class Consumer {
 
  */
 
+    public static long getStartTime() {
+        return startTime;
+    }
+
+    public static void setStartTime(long startTime) {
+        Consumer.startTime = startTime;
+    }
 
 
     public static FlinkKafkaConsumer<String> createConsumer() throws Exception {
@@ -105,7 +113,7 @@ public class Consumer {
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(1)));
         StreamExecutionEnvironment env = createEnviroment();
 
-        //startEndTsPerBatch = new HashMap<>();
+        //myEma38 = new HashMap<>();
 
 
         DataStream<Event> stream = env.addSource(consumer)

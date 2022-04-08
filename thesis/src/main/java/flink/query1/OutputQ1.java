@@ -2,18 +2,17 @@ package flink.query1;
 
 import scala.Tuple2;
 
+import java.util.List;
 import java.util.Map;
 
 public class OutputQ1 {
 
-    private Map<String, Float> lastPrice;   //simbolo, prezzo+batch
-    private Map<String, Integer> currBatch;
-    private Map<Tuple2<String,Integer>, Float> ema38Result;
-    private Map<Tuple2<String,Integer>, Float> ema100Result;
+    private Map<String, Float> lastPricePerSymbol;   //simbolo, prezzo+batch
+    private Map<String, List<Integer>> symbolInBatches;
 
-    public OutputQ1(Map<String, Float> price, Map<String, Integer> batch) {
-        this.lastPrice = price;
-        this.currBatch = batch;
+    public OutputQ1(Map<String, Float> price, Map<String, List<Integer>> batches) {
+        this.lastPricePerSymbol = price;
+        this.symbolInBatches = batches;
 
     }
 
@@ -22,10 +21,16 @@ public class OutputQ1 {
         float lastEma;    //retrieve last ema through key (currWindowCount)
         float resEma;
 
+        //System.out.println("currWindowCount: "+currWindowCount);
         if (currWindowCount==0){
             lastEma = 0;
         } else {
-            lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-1));
+            //todo: e se un simbolo stava in due finestre prima????
+            if (myEma38.containsKey(new Tuple2<>(s, currWindowCount-1))){
+                lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-1));
+            } else {
+                lastEma = 0;
+            }
         }
 
         resEma = (lastPrice*((float)2/(1+j)))+lastEma*(1-((float)2/(1+j)));
@@ -35,44 +40,27 @@ public class OutputQ1 {
 
    }
 
-    public Map<Tuple2<String, Integer>, Float> getEma38Result() {
-        return ema38Result;
+
+    public Map<String, Float> getLastPricePerSymbol() {
+        return lastPricePerSymbol;
     }
 
-    public void setEma38Result(Map<Tuple2<String, Integer>, Float> ema38Result) {
-        this.ema38Result = ema38Result;
+    public void setLastPricePerSymbol(Map<String, Float> lastPricePerSymbol) {
+        this.lastPricePerSymbol = lastPricePerSymbol;
     }
 
-    public Map<String, Float> getLastPrice() {
-        return lastPrice;
+    public Map<String, List<Integer>> getSymbolInBatches() {
+        return symbolInBatches;
     }
 
-    public void setLastPrice(Map<String, Float> lastPrice) {
-        this.lastPrice = lastPrice;
-    }
-
-    public Map<String, Integer> getCurrBatch() {
-        return currBatch;
-    }
-
-    public void setCurrBatch(Map<String, Integer> currBatch) {
-        this.currBatch = currBatch;
-    }
-
-    public Map<Tuple2<String, Integer>, Float> getEma100Result() {
-        return ema100Result;
-    }
-
-    public void setEma100Result(Map<Tuple2<String, Integer>, Float> ema100Result) {
-        this.ema100Result = ema100Result;
+    public void setSymbolInBatches(Map<String, List<Integer>> symbolInBatches) {
+        this.symbolInBatches = symbolInBatches;
     }
 
     @Override
     public String toString() {
         return "OutputQ1{" +
-                "lastPrice=" + lastPrice +
-                ", ema38Result=" + ema38Result +
-                //", ema100Result=" + ema100Result +
+                "lastPrice=" + lastPricePerSymbol +
                 '}';
     }
 }

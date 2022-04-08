@@ -47,7 +47,7 @@ public class Query1 {
         Processwindowfunction holds iteratable objects of all elements contained in a window,
         as well as additional meta information of the window to which the element belongs.
          */
-        stream2
+        keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
 
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
@@ -56,8 +56,8 @@ public class Query1 {
                     @Override
                     public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
 
-                        System.out.println("procALL-ouputQ1: "+elements.iterator().next());
-                        System.out.println("---iterator: "+elements.iterator());
+                        //System.out.println("procALL-ouputQ1: "+elements.iterator().next());
+                        //System.out.println("---iterator: "+elements.iterator());
 
 
                         Iterator<Out1> itr=elements.iterator();
