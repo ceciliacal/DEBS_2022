@@ -241,7 +241,7 @@ public class Prod2 {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 72) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }

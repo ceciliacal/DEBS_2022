@@ -97,24 +97,65 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             }
         }
 
+        float temp0 = myEma38.get(new Tuple2<>(s,0));
+        float temp2 = 0;
+        float temp3 = 0;
+        float temp4 = 0;
+        //======= PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
+        if (s.equals("IEBBB.FR") && count.get(s)==1){
+            myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);    //BUY
+        }
+        if (s.equals("IEBBB.FR") && count.get(s)==2){
+            temp2 = myEma38.get(new Tuple2<>(s,1));
+            myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
+        }
+        if (s.equals("IEBBB.FR") && count.get(s)==3){
+            temp3 = myEma38.get(new Tuple2<>(s,1));
+            myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
+        }
+        if (s.equals("IEBBB.FR") && count.get(s)==4){
+            temp4 = myEma38.get(new Tuple2<>(s,1));
+            myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
+        }
+
+
+
+
+
+        //======= FINE PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
+
+
         if (count.get(s)>0){
+
             if (myEma38.containsKey(new Tuple2<>(s,count.get(s)-1)) && myEma100.containsKey(new Tuple2<>(s,count.get(s)-1))){
 
-                if ((myEma38.get(new Tuple2<>(s,count.get(s)))>myEma100.get(new Tuple2<>(s,count.get(s))))&&(myEma38.get(new Tuple2<>(s,count.get(s)-1))<=myEma100.get(new Tuple2<>(s,count.get(s)-1)))){
-                    //buy
-                    buyCrossovers.put(new Tuple2<>(s,count.get(s)),new Tuple2<>(Config.buyAdvise, new Timestamp(context.window().getEnd())));
+                //if ((myEma38.get(new Tuple2<>(s,count.get(s)))>myEma100.get(new Tuple2<>(s,count.get(s))))&&(myEma38.get(new Tuple2<>(s,count.get(s)-1))<=myEma100.get(new Tuple2<>(s,count.get(s)-1)))){
+
+                if (myEma38.get(new Tuple2<>(s,count.get(s))) > myEma100.get(new Tuple2<>(s,count.get(s)))) {
+                    if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) <= myEma100.get(new Tuple2<>(s,count.get(s)-1))){
+                        //buy
+                        System.out.println("BUY!! "+s);
+                        buyCrossovers.put(new Tuple2<>(s,count.get(s)),new Tuple2<>(Config.buyAdvise, new Timestamp(context.window().getEnd())));
+
+                    }
                 }
-                if ((myEma38.get(new Tuple2<>(s,count.get(s)))<myEma100.get(new Tuple2<>(s,count.get(s))))&&(myEma38.get(new Tuple2<>(s,count.get(s)-1))>=myEma100.get(new Tuple2<>(s,count.get(s)-1)))){
-                    //sell
-                    buyCrossovers.put(new Tuple2<>(s,count.get(s)),new Tuple2<>(Config.sellAdvise, new Timestamp(context.window().getEnd())));
+                //if ((myEma38.get(new Tuple2<>(s,count.get(s)))<myEma100.get(new Tuple2<>(s,count.get(s))))&&(myEma38.get(new Tuple2<>(s,count.get(s)-1))>=myEma100.get(new Tuple2<>(s,count.get(s)-1)))){
+
+                if (myEma38.get(new Tuple2<>(s,count.get(s))) < myEma100.get(new Tuple2<>(s,count.get(s)))){
+                    if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) >= myEma100.get(new Tuple2<>(s,count.get(s)-1))) {
+                        //sell
+                        System.out.println("SELL!!");
+                        sellCrossovers.put(new Tuple2<>(s,count.get(s)),new Tuple2<>(Config.sellAdvise, new Timestamp(context.window().getEnd())));
+
+                    }
                 }
             }
         }
 
 
-        /*
+
         for (Tuple2<String, Integer> key: buyCrossovers.keySet()) {
-            if (buyCrossovers.get(key)!=null){
+            if (buyCrossovers.get(key)!=null && s.equals(key._1)){
                 System.out.println(s+" - buyCrossovers NONULL= "+key+" "+buyCrossovers.get(key));
             }
         }
@@ -123,14 +164,15 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
                 System.out.println(s+" - sellCrossovers NONULL= "+key+" "+sellCrossovers.get(key));
             }
         }
+        if (s.equals("IEBBB.FR")){
+            System.out.println(s+" - buyCrossovers = "+buyCrossovers.get(new Tuple2<>(s,count.get(s))));
+        }
 
 
-        System.out.println(s+" - buyCrossovers = "+buyCrossovers);
-        System.out.println(s+" - sellCrossovers = "+sellCrossovers);
+        //System.out.println(s+" - buyCrossovers = "+buyCrossovers);
+        //System.out.println(s+" - sellCrossovers = "+sellCrossovers);
 
         //========== END QUERY2 ============
-
-         */
 
         //System.out.println(s+"  symbolInBatches = "+symbolInBatches.get(s));
         Map<String, Tuple2<Integer,Float>> symbol_WindowEma38 = new HashMap<>();
@@ -142,19 +184,16 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         /*
         for (Tuple2<String, Integer> symbolWindow: myEma38.keySet()) {
-
-
             if (symbolWindow._1.equals(s)){
                 String key = symbolWindow.toString();
                 String value = myEma38.get(symbolWindow).toString();
                 //System.out.println("EMA38 window "+s+" "+windowStartDate+" - K: "+key +"   V: " + value);
-
                 //aiuto.put(s, new Tuple2<>(symbolWindow._2,Float.valueOf(value)));
-
             }
         }
-
          */
+
+        
 
 
         //System.out.println("myEma38 = "+myEma38);
@@ -165,6 +204,21 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             //System.out.println("bho = "+bho);
             out.collect(bho);
         });
+
+        if (s.equals("IEBBB.FR")&&count.get(s)==1){
+            myEma38.put(new Tuple2<>(s,1), temp0);
+
+        }
+        if (s.equals("IEBBB.FR")&&count.get(s)==2){
+            myEma38.put(new Tuple2<>(s,2), temp2);
+        }
+        if (s.equals("IEBBB.FR")&&count.get(s)==3){
+            myEma38.put(new Tuple2<>(s,2), temp3);
+        }
+        if (s.equals("IEBBB.FR")&&count.get(s)==4){
+            myEma38.put(new Tuple2<>(s,2), temp3);
+        }
+
 
 
     }

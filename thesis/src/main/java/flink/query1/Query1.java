@@ -57,10 +57,18 @@ public class Query1 {
                     public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
 
 
+                        System.out.println("in processALL");
 
+                        /*
                         for (Out1 element : elements) {
                             System.out.println(new Date(context.window().getStart()) + " " + element);
                         }
+
+                         */
+
+
+
+
 
 
 
