@@ -2,6 +2,7 @@ package flink.query1;
 
 import data.Event;
 import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 
 
 public class MyAggregateFunction implements AggregateFunction<Event, AccumulatorQ1, OutputQ1> {
