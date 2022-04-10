@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class OutputQ1 {
 
-    private Map<String, Float> lastPricePerSymbol;   //simbolo, prezzo+batch
+    private Map<String, Float> lastPricePerSymbol;
     private Map<String, List<Integer>> symbolInBatches;
 
     public OutputQ1(Map<String, Float> price, Map<String, List<Integer>> batches) {

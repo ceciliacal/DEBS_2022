@@ -1,10 +1,8 @@
 package kafka;
 
-import data.Event;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -13,7 +11,6 @@ import subscription.challenge.*;
 import utils.Config;
 
 import java.io.DataInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class Prod2 {
+public class Producer {
 
     private static final Integer windowLen = 5; //minutes
 
@@ -83,16 +80,9 @@ public class Prod2 {
         long start;
         Timestamp nextWindow = null;
         long next = 0;
-        Timestamp windowToFire = null;
         SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
 
-        //TODO: porta socket 6666+cnt
-
-
-
         while(true) {
-            //ServerSocket ss = new ServerSocket(6667);
-
             System.out.println("==== cnt: "+cnt);
             Batch batch = challengeClient.nextBatch(newBenchmark);
             num = batch.getEventsCount();
@@ -103,7 +93,7 @@ public class Prod2 {
             }
 
 
-            //=======GESTIONEFINESTRE========
+            //======= windows setup ========
             if (cnt==0){
                 start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
                 //next = start;
@@ -111,43 +101,19 @@ public class Prod2 {
                 nextWindow = new Timestamp(next);
                 System.out.println("nextWindow = "+nextWindow);
             }
+            //==== end of windows setup =====
 
 
-            /*
-            Timestamp lastTsThisBatch = new Timestamp(batch.getEvents(num-1).getLastTrade().getSeconds() * 1000L);
-            System.out.println("lastTsThisBatch = "+lastTsThisBatch);
-
-
-
-            if (lastTsThisBatch.compareTo(nextWindow)>0){
-                //todo caso =.  chiama funzione che calcola finestra che produce i risultati. se è minore di next window, allora risultati vengono prodotti alla next window
-                windowToFire = windowProducingResult(lastTsThisBatch, nextWindow);
-                System.out.println("windowToFire= "+windowToFire);
-            }
-            if (windowToFire.compareTo(nextWindow)<0){
-                windowToFire = nextWindow;
-            }
-            */
-
-
-
-            //=======FINE GESTIONEFINESTRE========
-
-
-
-
-            //===========SEND=================
+            //=========== send data ===========
 
             String[][] value = {new String[6]};
             final String[] valueToSend = new String[1];
-            //int flag = 0;   //0 se è la prima tupla della finestra successiva
 
             for (i=0;i<num;i++){
 
                 currSeconds = batch.getEvents(i).getLastTrade().getSeconds();
                 Timestamp lastTradeTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
                 assert lastTradeTimestamp != null;
-
 
                 //System.out.println("cnt = "+cnt+" lastTradeTimestamp: "+lastTradeTimestamp+" nextWindow: "+nextWindow);
                 value[0][0] = batch.getEvents(i).getSymbol();
@@ -183,12 +149,6 @@ public class Prod2 {
                     System.out.println("NELL IF "+new Date(System.currentTimeMillis()));
                     System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
                     System.out.println("nextWindow: "+nextWindow);
-                    //System.out.println("windowToFire: "+windowToFire);
-
-                    TimeUnit.SECONDS.sleep(5);
-                    //flag = 1;   //todo: pensa a modo per fare flag
-
-
 
                     Socket s = ss.accept();
 
@@ -196,15 +156,15 @@ public class Prod2 {
                     ss.close();
                     String str = (String) dis.readUTF();
                     System.out.println("message = "+str);
+                    calculateIndicators(batch);
 
+                    //TODO: prendi ultimo ts dell ultimo batch e manda dato x chiudere
 
-                    //}
                 }
 
             }
-            //ss.close();
 
-            //=============ENDSEND===========0
+            //=========== end of send data ===========
 
 /*
             //process the batch of events we have
@@ -237,101 +197,21 @@ public class Prod2 {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
 
         challengeClient.endBenchmark(newBenchmark);
         System.out.println("ended Benchmark");
-
-
-
-
         producer.close();
 
     }
 
-    public static Timestamp windowProducingResult(Timestamp lastTs,Timestamp nextWindow){
-        long res = nextWindow.getTime();
-        while(true){
-            res = res + TimeUnit.MINUTES.toMillis(windowLen);
-            System.out.println("res = "+new Timestamp(res));
-            if (lastTs.compareTo(new Timestamp(res))<0){
-                break;
-            }
-        }
-        return new Timestamp(res);
-    }
 
-    public static List<Indicator> calculateIndicators(Batch batch, int cnt, Producer<String, String> producer) throws IOException, InterruptedException {
+    public static List<Indicator> calculateIndicators(Batch batch) throws IOException, InterruptedException {
 
-        /*
-        int i;
-        Long seconds;
-        int num = batch.getEventsCount();
-        SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
-        String[][] value = {new String[6]};
-        final String[] valueToSend = new String[1];
-
-        //TODO: porta socket 6666+cnt
-        System.out.println("==== cnt: "+cnt);
-        ServerSocket ss = new ServerSocket(6667);
-
-        if (batch == null){
-            return new ArrayList<>();
-        }
-
-        //num
-        for (i=0;i<num;i++){
-
-            seconds = batch.getEvents(i).getLastTrade().getSeconds();
-            Timestamp lastTradeTimestamp = Event.stringToTimestamp(formatter.format(new Date(seconds * 1000L)),1);
-            assert lastTradeTimestamp != null;
-
-            value[0][0] = batch.getEvents(i).getSymbol();
-            value[0][1] = String.valueOf(batch.getEvents(i).getSecurityType());
-            value[0][2] = String.valueOf(lastTradeTimestamp);
-            value[0][3] = String.valueOf(batch.getEvents(i).getLastTradePrice());
-            value[0][4] = String.valueOf(cnt);     //batch number
-            value[0][5] = String.valueOf(i);       //event number inside of current batch
-            valueToSend[0] = String.join(",", value[0]);
-
-            ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, lastTradeTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
-            System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+ producerRecord.value());
-
-            producer.send(producerRecord, (metadata, exception) -> {
-                if(metadata != null){
-                    //successful writes
-                    System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
-                }
-                else{
-                    //unsuccessful writes
-                    System.out.println("Error Sending Csv Record -> key: " + producerRecord.key()+" value: " + producerRecord.value());
-                }
-            });
-
-        }
-
-
-
-        //ServerSocket ss = new ServerSocket(6667);
-        Socket s = ss.accept();
-
-        DataInputStream dis = new DataInputStream(s.getInputStream());
-        String str = (String) dis.readUTF();
-        System.out.println("message = "+str);
-
-
-
-
-
-
-        ss.close();
-
-        //TimeUnit.SECONDS.sleep(10);
-
-         */
+        System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!!");
         return new ArrayList<>();
 
     }
@@ -370,51 +250,4 @@ public class Prod2 {
     }
 
 }
-
-
-
-    /*
-        //before processing ============= INVIO DEI DATI FINO AL BATCH CORRENTE A KAFKA =============
-        Stream<String> fileStream = Files.lines(Paths.get(datasetPath+".csv"));
-
-
-        fileStream.skip(countFileLine.get()).forEach(line -> {
-
-            countFileLine.incrementAndGet();
-
-
-            String[] lineFields = line.split(",");
-
-            Timestamp lastUpdateTs = createTimestamp(lineFields[2], lineFields[3]);
-
-            //creating producer record (value) to send. it only contains data (from csv)actually useful for query's result
-            value[0][0] = lineFields[0];                //sec type
-            value[0][1] = lineFields[1];                //sec type
-            value[0][2]= lastUpdateTs.toString();       //ts for last received update
-            value[0][3]= lineFields[21];                //last trade price
-
-            valueToSend[0] = String.join(",", value[0]);
-
-            ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, lastUpdateTs.getTime(), lineFields[0], valueToSend[0]);
-            System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+producerRecord.value());
-
-            producer.send(producerRecord, (metadata, exception) -> {
-                if(metadata != null){
-                    //successful writes
-                    System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
-                }
-                else{
-                    //unsuccessful writes
-                    System.out.println("Error Sending Csv Record -> key: " + producerRecord.key()+" value: " + producerRecord.value());
-                }
-            });
-
-        });
-
-        System.out.println("fine FOREACH, countFileLine = "+countFileLine.get());
-        fileStream.close();
-
-        //before processing ============= FINE INVIO DEI DATI =============
-
-         */
 

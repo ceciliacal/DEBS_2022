@@ -25,19 +25,13 @@ import java.util.Map;
 
 public class AccumulatorQ1 implements Serializable {
 
-    //todo: qui x traccia BATCH Metti che value è una tupla2 di lastprice+ batchNumber
-    //private Map<Tuple2<String,Integer>, Float> lastPricePerSymbol;  //K:symbol - V:last price
     private Map<String, Float> lastPricePerSymbol;      //K:symbol - V:last price
     private Map<String, List<Integer>> symbolInBatches; //K:symbol - V:list of batches num
-
-    //private Map<Tuple2<String,Integer>, Float> lastPricePerSymbol2;  //K:symbol - V:last price
-
 
     public AccumulatorQ1(){
         this.lastPricePerSymbol = new HashMap<>();
         this.symbolInBatches = new HashMap<>();
     }
-    //nFinestra, list<batch>
 
     public void add(Event value) {
 

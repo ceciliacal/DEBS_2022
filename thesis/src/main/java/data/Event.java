@@ -2,11 +2,9 @@ package data;
 
 import utils.Config;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Event {
 
@@ -16,8 +14,6 @@ public class Event {
     Timestamp   timestamp;
     String      strTimestamp;
     float       lastTradePrice;
-    Double      ema38;
-    Double      ema100;
     Integer     numEvent;
 
 
@@ -40,31 +36,8 @@ public class Event {
                 ", timestamp=" + timestamp +
                 ", strTimestamp='" + strTimestamp + '\'' +
                 ", lastTradePrice=" + lastTradePrice +
-                ", ema38=" + ema38 +
-                ", ema100=" + ema100 +
                 ", numEvent=" + numEvent +
                 '}';
-    }
-
-    public static List<Event> createSymbolLastTsList(final List<Event> list){
-
-        List<Event> temp = list;
-        List<Event> symbolLastTsList;
-
-        //sort the elements by symbol and find the max ts for that symbol
-        symbolLastTsList = temp.stream()
-                .collect(Collectors.groupingBy(Event::getSymbol,
-                        Collectors.maxBy(Comparator.comparing(Event::getTimestamp))))
-                .values().stream()
-                .map(Optional::get)
-                .collect(Collectors.toList());
-
-        for (int i=0;i<symbolLastTsList.size();i++){
-            System.out.println("-"+symbolLastTsList.get(i).getSymbol()+" - "+symbolLastTsList.get(i).getTimestamp());
-        }
-
-        return symbolLastTsList;
-
     }
 
 
@@ -106,22 +79,6 @@ public class Event {
 
     public void setLastTradePrice(float lastTradePrice) {
         this.lastTradePrice = lastTradePrice;
-    }
-
-    public Double getEma38() {
-        return ema38;
-    }
-
-    public void setEma38(Double ema38) {
-        this.ema38 = ema38;
-    }
-
-    public Double getEma100() {
-        return ema100;
-    }
-
-    public void setEma100(Double ema100) {
-        this.ema100 = ema100;
     }
 
     public Integer getBatch() {

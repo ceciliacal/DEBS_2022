@@ -1,15 +1,10 @@
 package utils;
 
 
-import data.Event;
-
-import java.util.List;
-
 public interface Config {
     //public static String KAFKA_BROKERS = "kafka1:19091";
     public static String KAFKA_BROKERS = "localhost:9091";
     public static String CLIENT_ID = "myclient";
-    public static String datasetPath = "dataset/test3";
     public static String TOPIC1 = "provaTopic";
     public static String TOPIC2 = "results";
     public static Double accTime = 0.0;
