@@ -49,7 +49,31 @@ public class Query1 {
          */
         keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+                /*
+                .trigger(new Trigger<Event, TimeWindow>() {
+                    @Override
+                    public TriggerResult onElement(Event element, long timestamp, TimeWindow window, TriggerContext ctx) throws Exception {
+                        System.out.println("TR: "+element.getSymbol()+" "+new Date(timestamp)+" "+new Date(window.getStart())+" "+new Date(window.getEnd()));
+                        return TriggerResult.CONTINUE;
+                    }
 
+                    @Override
+                    public TriggerResult onProcessingTime(long time, TimeWindow window, TriggerContext ctx) throws Exception {
+                        return null;
+                    }
+
+                    @Override
+                    public TriggerResult onEventTime(long time, TimeWindow window, TriggerContext ctx) throws Exception {
+                        return TriggerResult.CONTINUE;
+                    }
+
+                    @Override
+                    public void clear(TimeWindow window, TriggerContext ctx) throws Exception {
+
+                    }
+                })
+
+                 */
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(5)))
                 .process(new ProcessAllWindowFunction<Out1, Out1, TimeWindow>() {
@@ -57,27 +81,19 @@ public class Query1 {
                     public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
 
 
-                        System.out.println("in processALL");
+                        System.out.println("in processALL "+new Date(System.currentTimeMillis()));
 
-                        /*
+
                         for (Out1 element : elements) {
                             System.out.println(new Date(context.window().getStart()) + " " + element);
                         }
 
-                         */
-
-
-
-
-
-
 
                         Out1 res = elements.iterator().next();
                         //out.collect(res);
-                        //System.out.println(elements.forEach(o -> o.getEma38Result()));
 
 
-                        /*
+
                         Socket s = new Socket("localhost",6667);
                         DataOutputStream dout = new DataOutputStream(s.getOutputStream());
                         dout.writeUTF("CIAO");
@@ -85,7 +101,7 @@ public class Query1 {
                         dout.close();
                         s.close();
 
-                         */
+
 
 
 

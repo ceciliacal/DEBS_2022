@@ -17,10 +17,10 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
     private Map<String, Integer> count;  //counts number of current window per symbol
     private Map<Tuple2<String,Integer>,Float> myEma38;   //K: <symbol,countWindow> - V: ema
     private Map<Tuple2<String,Integer>,Float> myEma100;
-    //todo query2: hashmap<symbol, lista di Tuple2 <int crossover, sell o buy + tsFinaleFinestra>
-    private Map<Tuple2<String, Integer>,Tuple2<String, Timestamp>> buyCrossovers;
     private Map<String, List<Timestamp>> buyCrossovers2;
     private Map<String, List<Timestamp>> sellCrossovers2;
+
+    private Map<Tuple2<String, Integer>,Tuple2<String, Timestamp>> buyCrossovers;
     private Map<Tuple2<String, Integer>,Tuple2<String, Timestamp>> sellCrossovers;
 
 
@@ -60,6 +60,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         }
 
+        //System.out.println("window: "+windowStartDate+" - "+windowEndTs);
         //System.out.println("FINAL: k= "+s+" v= "+count.get(s)+"  "+windowStartDate);
 
         if (myEma38==null){
@@ -72,9 +73,9 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         }
 
         //calcolo ema38
-        OutputQ1.calculateEMA(s,lastPricePerSymbol.get(s), count.get(s), 38, myEma38);
+        OutputQ1.calculateEMA(s,lastPricePerSymbol.get(s), count.get(s), Config.ema38, myEma38);
         //calcolo ema100
-        OutputQ1.calculateEMA(s, lastPricePerSymbol.get(s), count.get(s), 100, myEma100);
+        OutputQ1.calculateEMA(s, lastPricePerSymbol.get(s), count.get(s), Config.ema100, myEma100);
 
         //System.out.println("--IN PROCESS: key = "+s+",  - window start = "+date+ ", count = "+ windowCount +", lastPrice = "+elements.iterator().next().getLastPrice()+",  currEma38 = "+ema38.get(windowCount)+",  currEma100 = "+ema100.get(windowCount)+",   batchSTART: "+ Consumer.startEndTsPerBatch.get(0).f0+",   batchEND: "+ Consumer.startEndTsPerBatch.get(0).f1);
 
@@ -104,6 +105,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         }
 
 
+        /*
         float temp0 = myEma38.get(new Tuple2<>(s,0));
         float temp2 = 0;
         float temp3 = 0;
@@ -112,13 +114,13 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         if (s.equals("IEBBB.FR") && count.get(s)==1){
             myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);    //BUY
         }
-        /*
+
         if (s.equals("IEBBB.FR") && count.get(s)==2){
             temp2 = myEma38.get(new Tuple2<>(s,1));
             myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
         }
 
-         */
+
         if (s.equals("IEBBB.FR") && count.get(s)==3){
             temp3 = myEma38.get(new Tuple2<>(s,1));
             myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
@@ -133,6 +135,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         //======= FINE PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
+
+         */
 
 
         if (count.get(s)>0){
@@ -193,9 +197,6 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             if (sellCrossovers.get(key)!=null){
                 System.out.println(s+" - sellCrossovers NONULL= "+key+" "+sellCrossovers.get(key));
             }
-        }
-        if (s.equals("IEBBB.FR")){
-            System.out.println(s+" - buyCrossovers2 = "+buyCrossovers2.get(s));
         }
 
 
@@ -266,22 +267,25 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             out.collect(bho);
         });
 
+        /*
+
         if (s.equals("IEBBB.FR")&&count.get(s)==1){
             myEma38.put(new Tuple2<>(s,1), temp0);
 
         }
-        /*
+
         if (s.equals("IEBBB.FR")&&count.get(s)==2){
             myEma38.put(new Tuple2<>(s,2), temp2);
         }
 
-         */
+
         if (s.equals("IEBBB.FR")&&count.get(s)==3){
             myEma38.put(new Tuple2<>(s,2), temp3);
         }
         if (s.equals("IEBBB.FR")&&count.get(s)==4){
             myEma38.put(new Tuple2<>(s,2), temp4);
         }
+         */
 
 
 

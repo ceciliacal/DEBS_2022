@@ -92,6 +92,7 @@ public class Prod2 {
 
         while(true) {
             //ServerSocket ss = new ServerSocket(6667);
+
             System.out.println("==== cnt: "+cnt);
             Batch batch = challengeClient.nextBatch(newBenchmark);
             num = batch.getEventsCount();
@@ -105,15 +106,18 @@ public class Prod2 {
             //=======GESTIONEFINESTRE========
             if (cnt==0){
                 start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
-                next = start;
-                next = next + TimeUnit.MINUTES.toMillis(windowLen);
+                //next = start;
+                next = start + TimeUnit.MINUTES.toMillis(windowLen);
                 nextWindow = new Timestamp(next);
                 System.out.println("nextWindow = "+nextWindow);
             }
 
 
+            /*
             Timestamp lastTsThisBatch = new Timestamp(batch.getEvents(num-1).getLastTrade().getSeconds() * 1000L);
             System.out.println("lastTsThisBatch = "+lastTsThisBatch);
+
+
 
             if (lastTsThisBatch.compareTo(nextWindow)>0){
                 //todo caso =.  chiama funzione che calcola finestra che produce i risultati. se è minore di next window, allora risultati vengono prodotti alla next window
@@ -123,6 +127,8 @@ public class Prod2 {
             if (windowToFire.compareTo(nextWindow)<0){
                 windowToFire = nextWindow;
             }
+            */
+
 
 
             //=======FINE GESTIONEFINESTRE========
@@ -134,7 +140,7 @@ public class Prod2 {
 
             String[][] value = {new String[6]};
             final String[] valueToSend = new String[1];
-            int flag = 0;
+            //int flag = 0;   //0 se è la prima tupla della finestra successiva
 
             for (i=0;i<num;i++){
 
@@ -143,46 +149,7 @@ public class Prod2 {
                 assert lastTradeTimestamp != null;
 
 
-                //todo check rispetto a next
-                System.out.println("cnt = "+cnt+" lastTradeTimestamp: "+lastTradeTimestamp+" nextWindow: "+nextWindow);
-                if (lastTradeTimestamp.compareTo(nextWindow)==0 || lastTradeTimestamp.compareTo(windowToFire)==0){
-                    if(flag==0){
-                        next = next + TimeUnit.MINUTES.toMillis(windowLen);
-                        nextWindow = new Timestamp(next);
-                        //calculateIndicators()
-                        System.out.println("NELL IF ");
-                        System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
-                        System.out.println("nextWindow: "+nextWindow);
-                        System.out.println("windowToFire: "+windowToFire);
-
-                        TimeUnit.SECONDS.sleep(2);
-                        flag = 1;   //todo: pensa a modo per fare flag
-
-                        /*
-                        //ServerSocket ss = new ServerSocket(6667);
-                        Socket s = ss.accept();
-
-                        DataInputStream dis = new DataInputStream(s.getInputStream());
-                        String str = (String) dis.readUTF();
-                        System.out.println("message = "+str);
-
-                        //ss.close();
-
-                         */
-
-
-
-
-                    }
-                }
-
-                if (lastTradeTimestamp.compareTo(nextWindow)==0){
-                    flag = 0;
-                }
-
-
-
-
+                //System.out.println("cnt = "+cnt+" lastTradeTimestamp: "+lastTradeTimestamp+" nextWindow: "+nextWindow);
                 value[0][0] = batch.getEvents(i).getSymbol();
                 value[0][1] = String.valueOf(batch.getEvents(i).getSecurityType());
                 value[0][2] = String.valueOf(lastTradeTimestamp);
@@ -192,18 +159,47 @@ public class Prod2 {
                 valueToSend[0] = String.join(",", value[0]);
 
                 ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, lastTradeTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
-                System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                //System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+ producerRecord.value());
 
                 producer.send(producerRecord, (metadata, exception) -> {
                     if(metadata != null){
                         //successful writes
-                        //System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                        System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
                     }
                     else{
                         //unsuccessful writes
                         System.out.println("Error Sending Csv Record -> key: " + producerRecord.key()+" value: " + producerRecord.value());
                     }
                 });
+
+
+                if (lastTradeTimestamp.compareTo(nextWindow)>0){
+
+                    ServerSocket ss = new ServerSocket(6667);
+
+                    next = next + TimeUnit.MINUTES.toMillis(windowLen);
+                    nextWindow = new Timestamp(next);
+                    //calculateIndicators()
+                    System.out.println("NELL IF "+new Date(System.currentTimeMillis()));
+                    System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
+                    System.out.println("nextWindow: "+nextWindow);
+                    //System.out.println("windowToFire: "+windowToFire);
+
+                    TimeUnit.SECONDS.sleep(5);
+                    //flag = 1;   //todo: pensa a modo per fare flag
+
+
+
+                    Socket s = ss.accept();
+
+                    DataInputStream dis = new DataInputStream(s.getInputStream());
+                    ss.close();
+                    String str = (String) dis.readUTF();
+                    System.out.println("message = "+str);
+
+
+                    //}
+                }
 
             }
             //ss.close();
@@ -241,7 +237,7 @@ public class Prod2 {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 72) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
