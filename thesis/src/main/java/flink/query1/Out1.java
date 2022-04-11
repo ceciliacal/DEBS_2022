@@ -2,20 +2,37 @@ package flink.query1;
 
 import scala.Tuple2;
 
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 
 public class Out1 {
 
+    private String symbol;
     private Integer batchNum;
     private Map<String, Tuple2<Integer,Float>> symbol_WindowEma38;
     private Map<String, Tuple2<Integer,Float>> symbol_WindowEma100;
     private Float price;
+    private Map<String, List<Timestamp>> symbol_buyCrossovers;
+    private Map<String, List<Timestamp>> symbol_sellCrossovers;
 
-    public Out1(Integer batch, Map<String, Tuple2<Integer,Float>> symbolWindow_ema38,Map<String, Tuple2<Integer,Float>>symbolWindow_ema100, float price) {
-        this.batchNum = batch;
-        this.symbol_WindowEma38 = symbolWindow_ema38;
-        this.symbol_WindowEma100 = symbolWindow_ema100;
+
+    public Out1(String symbol, Integer batchNum, Map<String, Tuple2<Integer, Float>> symbol_WindowEma38, Map<String, Tuple2<Integer, Float>> symbol_WindowEma100, Float price, Map<String, List<Timestamp>> symbol_buyCrossovers, Map<String, List<Timestamp>> symbol_sellCrossovers) {
+        this.symbol = symbol;
+        this.batchNum = batchNum;
+        this.symbol_WindowEma38 = symbol_WindowEma38;
+        this.symbol_WindowEma100 = symbol_WindowEma100;
         this.price = price;
+        this.symbol_buyCrossovers = symbol_buyCrossovers;
+        this.symbol_sellCrossovers = symbol_sellCrossovers;
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
     }
 
     public Integer getBatchNum() {
@@ -50,13 +67,33 @@ public class Out1 {
         this.price = price;
     }
 
+    public Map<String, List<Timestamp>> getSymbol_buyCrossovers() {
+        return symbol_buyCrossovers;
+    }
+
+    public void setSymbol_buyCrossovers(Map<String, List<Timestamp>> symbol_buyCrossovers) {
+        this.symbol_buyCrossovers = symbol_buyCrossovers;
+    }
+
+    public Map<String, List<Timestamp>> getSymbol_sellCrossovers() {
+        return symbol_sellCrossovers;
+    }
+
+    public void setSymbol_sellCrossovers(Map<String, List<Timestamp>> symbol_sellCrossovers) {
+        this.symbol_sellCrossovers = symbol_sellCrossovers;
+    }
+
+
     @Override
     public String toString() {
         return "Out1{" +
-                "batchNum=" + batchNum +
+                "symbol='" + symbol + '\'' +
+                ", batchNum=" + batchNum +
                 ", symbol_WindowEma38=" + symbol_WindowEma38 +
                 ", symbol_WindowEma100=" + symbol_WindowEma100 +
                 ", price=" + price +
+                ", symbol_buyCrossovers=" + symbol_buyCrossovers +
+                ", symbol_sellCrossovers=" + symbol_sellCrossovers +
                 '}';
     }
 }

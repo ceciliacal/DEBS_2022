@@ -105,7 +105,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         }
 
 
-        /*
+
         float temp0 = myEma38.get(new Tuple2<>(s,0));
         float temp2 = 0;
         float temp3 = 0;
@@ -136,7 +136,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         //======= FINE PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
 
-         */
+
 
 
         if (count.get(s)>0){
@@ -220,48 +220,53 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             }
         }
  */
-
+        List<Timestamp> lastThreeBuys = null;
         if (buyCrossovers2.get(s)!=null){
-            int size = buyCrossovers2.get(s).size();
-            List<Timestamp> lastThreeBuys = new ArrayList<>();
-            if (size>=3){
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-1));
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-2));
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-3));
-            } else if (size==2){
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-1));
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-2));
-            } else if (size==1){
-                lastThreeBuys.add(buyCrossovers2.get(s).get(size-1));
+            int sizeBuy = buyCrossovers2.get(s).size();
+            lastThreeBuys = new ArrayList<>();
+            if (sizeBuy>=3){
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-1));
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-2));
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-3));
+            } else if (sizeBuy==2){
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-1));
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-2));
+            } else if (sizeBuy==1){
+                lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-1));
             }
             System.out.println("lastThreeBuys = "+ lastThreeBuys);
         }
 
+        List<Timestamp> lastThreeSells = null;
         if (sellCrossovers2.get(s)!=null){
-            int size = sellCrossovers2.get(s).size();
-            List<Timestamp> lastThreeSells = new ArrayList<>();
-            if (size>=3){
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-1));
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-2));
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-3));
-            } else if (size==2){
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-1));
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-2));
-            } else if (size==1){
-                lastThreeSells.add(sellCrossovers2.get(s).get(size-1));
+            int sizeSell = sellCrossovers2.get(s).size();
+            lastThreeSells = new ArrayList<>();
+            if (sizeSell>=3){
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-1));
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-2));
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-3));
+            } else if (sizeSell==2){
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-1));
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-2));
+            } else if (sizeSell==1){
+                lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-1));
             }
             System.out.println("lastThreeSells = "+ lastThreeSells);
         }
 
+        Map<String, List<Timestamp>> symbol_buyCrossovers = new HashMap<>();
+        Map<String, List<Timestamp>> symbol_sellCrossovers = new HashMap<>();
+        symbol_buyCrossovers.put(s,lastThreeBuys);
+        symbol_sellCrossovers.put(s, lastThreeSells);
 
         List<Integer> currBatches = symbolInBatches.get(s);
         currBatches.stream().forEach(batch -> {
-            Out1 bho = new Out1(batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s));
+            Out1 bho = new Out1(s, batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
             //System.out.println("bho = "+bho);
             out.collect(bho);
         });
 
-        /*
+
 
         if (s.equals("IEBBB.FR")&&count.get(s)==1){
             myEma38.put(new Tuple2<>(s,1), temp0);
@@ -279,7 +284,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         if (s.equals("IEBBB.FR")&&count.get(s)==4){
             myEma38.put(new Tuple2<>(s,2), temp4);
         }
-         */
+
 
 
 

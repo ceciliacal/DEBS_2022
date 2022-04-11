@@ -197,7 +197,7 @@ public class Producer {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }

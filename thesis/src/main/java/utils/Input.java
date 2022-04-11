@@ -17,6 +17,13 @@ public class Input {
         System.out.println("a= "+a);
         a=a+3;
         System.out.println("a= "+a);
+        
+        String s ="\n";
+        for (int i=0;i<10;i++){
+            s = s+"ciaociao\n";
+        }
+
+        System.out.println("s= "+s);
 
 
         /*
