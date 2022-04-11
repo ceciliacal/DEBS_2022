@@ -18,18 +18,25 @@ public class OutputQ1 {
 
     public static Map<Tuple2<String,Integer>, Float> calculateEMA(String s, Float lastPrice, int currWindowCount, int j, Map<Tuple2<String,Integer>, Float> myEma38){
 
-        float lastEma;    //retrieve last ema through key (currWindowCount)
+        float lastEma = 0;    //retrieve last ema through key (currWindowCount)
         float resEma;
 
+        int i=2;
+
         //System.out.println("currWindowCount: "+currWindowCount);
-        if (currWindowCount==0){
-            lastEma = 0;
-        } else {
+        if (currWindowCount>0){
             if (myEma38.containsKey(new Tuple2<>(s, currWindowCount-1))){
                 lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-1));
             } else {
                 //todo: e se un simbolo stava in due finestre prima????
-                lastEma = 0;
+                //lastEma = 0;
+                while (i!=currWindowCount){
+                    if (myEma38.containsKey(new Tuple2<>(s, currWindowCount-i))){
+                        lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-i));
+                        break;
+                    }
+                    i++;
+                }
             }
         }
 

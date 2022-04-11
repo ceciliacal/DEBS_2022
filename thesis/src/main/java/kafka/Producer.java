@@ -1,5 +1,6 @@
 package kafka;
 
+import com.google.protobuf.Descriptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -7,6 +8,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import scala.Tuple2;
 import subscription.challenge.*;
 import utils.Config;
 
@@ -14,6 +16,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -22,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 public class Producer {
 
     private static final Integer windowLen = 5; //minutes
+    private static Map<Integer,Long> batchSeqId;       //to retrieve each bach when sending aggregated results
+    private static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults;      //K: #batch+symbol V:ema38+ema100
 
     /*
     creates kafka producer
@@ -42,7 +47,8 @@ public class Producer {
     public static void main(String[] args) throws Exception {
 
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
-
+        batchSeqId = new HashMap<>();
+        intermediateResults = new HashMap<>();
 
         //============================ starts MAIN gRPC ============================
 
@@ -84,19 +90,21 @@ public class Producer {
 
         while(true) {
             System.out.println("==== cnt: "+cnt);
+
             Batch batch = challengeClient.nextBatch(newBenchmark);
+            batchSeqId.put(cnt,batch.getSeqId());
+
             num = batch.getEventsCount();
 
             if (batch.getLast()) { //Stop when we get the last batch
                 System.out.println("Received lastbatch, finished!");
-                break;
+                break;  //todo ultimo batch fallo qui e sposta questo if sotto
             }
 
 
             //======= windows setup ========
             if (cnt==0){
                 start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
-                //next = start;
                 next = start + TimeUnit.MINUTES.toMillis(windowLen);
                 nextWindow = new Timestamp(next);
                 System.out.println("nextWindow = "+nextWindow);
@@ -108,6 +116,25 @@ public class Producer {
 
             String[][] value = {new String[6]};
             final String[] valueToSend = new String[1];
+
+            long lastTsSeconds = batch.getEvents(num-1).getLastTrade().getSeconds();
+            Timestamp lastTsBatch = stringToTimestamp(formatter.format(new Date(lastTsSeconds * 1000L)),1);
+            long startTsSeconds = batch.getEvents(0).getLastTrade().getSeconds();
+            Timestamp startTsBatch = stringToTimestamp(formatter.format(new Date(startTsSeconds * 1000L)),1);
+
+            System.out.println("lastTsBatch = "+lastTsBatch);
+            System.out.println("startTsBatch = "+startTsBatch);
+
+            Timestamp whenResult = null;
+            System.out.println("---nextWindow INIZIO: "+nextWindow);
+
+            System.out.println("diff = "+ (lastTsSeconds - startTsSeconds));
+            if (lastTsSeconds - startTsSeconds > TimeUnit.MINUTES.toSeconds(windowLen)){
+                System.out.println("ts sta in piu finestre");
+                whenResult = windowProducingResult(lastTsBatch,nextWindow);
+            }
+            System.out.println("whenResult = "+whenResult);
+
 
             for (i=0;i<num;i++){
 
@@ -130,7 +157,7 @@ public class Producer {
                 producer.send(producerRecord, (metadata, exception) -> {
                     if(metadata != null){
                         //successful writes
-                        System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                        //System.out.println("msgSent: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
                     }
                     else{
                         //unsuccessful writes
@@ -142,10 +169,10 @@ public class Producer {
                 if (lastTradeTimestamp.compareTo(nextWindow)>0){
 
                     ServerSocket ss = new ServerSocket(6667);
-
+                    Timestamp prev = nextWindow;
                     next = next + TimeUnit.MINUTES.toMillis(windowLen);
                     nextWindow = new Timestamp(next);
-                    //calculateIndicators()
+
                     System.out.println("NELL IF "+new Date(System.currentTimeMillis()));
                     System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
                     System.out.println("nextWindow: "+nextWindow);
@@ -154,14 +181,43 @@ public class Producer {
 
                     DataInputStream dis = new DataInputStream(s.getInputStream());
                     ss.close();
-                    String str = (String) dis.readUTF();
+                    //String str = (String) dis.readUTF();
+                    //String str = String.valueOf(dis.readAllBytes());
+                    byte[] bytes = dis.readAllBytes();
+                    String str = new String(bytes, StandardCharsets.UTF_8);
                     System.out.println("message = "+str);
-                    calculateIndicators(batch);
+                    //System.out.println("str2 = "+str2);
+
+
+                    if(whenResult!=null){
+                        System.out.println("WHEN RES È DIVERSO NULL! "+cnt);
+                        //ci entro solo quando il batch sta in piu finestre ->
+                        System.out.println("prev = "+prev);
+                        if (whenResult.compareTo(prev)>0){
+                            System.out.println("NON HO FINITO "+cnt);
+                            //todo: salva dentro a una mappa. salvo i dati intermedi che poi devo unire con i dati dei rimanenti titoli
+                            //todo nel batch0 che mi arrivano alle 8.20. e devo salvarmi il numero del batch dentro alla mappa!
+                            putIntoMap(str);
+                        }
+                        System.out.println("intermediateResults = "+intermediateResults);
+                        if (whenResult.compareTo(prev)==0){
+                            System.out.println("HO FINITO!!");
+                            putIntoMap(str);
+                        }
+                    }
+
+                    calculateIndicators(str);
 
                     //TODO: prendi ultimo ts dell ultimo batch e manda dato x chiudere
 
                 }
 
+                /*
+                if (lastTradeTimestamp == lastTsBatch){
+                    whenResult = null;
+                }
+
+                 */
             }
 
             //=========== end of send data ===========
@@ -197,7 +253,7 @@ public class Producer {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
@@ -208,19 +264,63 @@ public class Producer {
 
     }
 
+    public static void putIntoMap(String str) {
 
-    public static List<Indicator> calculateIndicators(Batch batch) throws IOException, InterruptedException {
+        String[] lines = str.split("\n");
+        for (String line : lines) {
+            String[] values = line.split(";");
+            intermediateResults.put(new Tuple2<>(Integer.valueOf(values[1]),values[2]), new Tuple2<>(Float.valueOf(values[3]),Float.valueOf(values[4])));
+        }
+    }
+
+
+    //todo: se batchSize > window, devo mandare solo i risultati finali!
+    public static List<Indicator> calculateIndicators(String str) throws IOException, InterruptedException {
 
         System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!!");
+        /*
+        List<Indicator> indicatorsList = new ArrayList<>();
+        String[] lines = str.split("\n");
+        for (String line : lines) {
+            String[] values = line.split(",");
+            Indicator.Builder ind = Indicator.newBuilder();
+            ind.setSymbol(values[2]);
+            ind.setEma38(Float.valueOf(values[3]));
+            ind.setEma100(Float.valueOf(values[4]));
+
+            indicatorsList.add(ind.build());
+        }
+        System.out.println("indicatorsList: "+indicatorsList);
+
+         */
         return new ArrayList<>();
 
     }
 
+    public static Timestamp windowProducingResult(Timestamp lastTs,Timestamp nextWindow){
+        long res = nextWindow.getTime();
+        while(true){
+            res = res + TimeUnit.MINUTES.toMillis(windowLen);
+            //System.out.println("res = "+new Timestamp(res));
+            if (lastTs.compareTo(new Timestamp(res))<0){
+                break;
+            }
+        }
+        return new Timestamp(res);
+    }
 
     public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
         //TODO: improve this implementation
 
         return new ArrayList<>();
+    }
+
+    public Map<Integer, Long> getBatchSeqId() {
+        return batchSeqId;
+    }
+
+    public void setBatchSeqId(Map<Integer, Long> batchSeqId) {
+        this.batchSeqId = batchSeqId;
     }
 
     public static Timestamp stringToTimestamp(String strDate, int invoker){

@@ -1,10 +1,15 @@
 package utils;
 
+import scala.Tuple2;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static utils.Output.geek_output;
@@ -12,18 +17,50 @@ import static utils.Output.geek_output;
 public class Input {
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        int a;
-        a=2;
-        System.out.println("a= "+a);
-        a=a+3;
-        System.out.println("a= "+a);
-        
-        String s ="\n";
-        for (int i=0;i<10;i++){
-            s = s+"ciaociao\n";
+
+        String s ="s";
+
+        java.util.Map<Tuple2<String, Integer>,Integer> bho = new HashMap<>();
+        //bho.put(new Tuple2<>("s",1),10);
+        //bho.put(new Tuple2<>("s",2),20);
+        //bho.put(new Tuple2<>("s",3),30);
+        //bho.put(new Tuple2<>("s",4),40);
+        //bho.put(new Tuple2<>("s",5),50);
+        int curr = 5;
+        int i=2;
+        int res =0;
+        if (curr>0) {
+            if (bho.containsKey(new Tuple2<>("s", curr-1))) {
+                System.out.println("NO!");
+            } else {
+                System.out.println("i="+i+" curr="+curr);
+                while (i != curr) {
+                    System.out.println("key: "+new Tuple2<>(s, curr -i));
+                    if (bho.containsKey(new Tuple2<>(s, curr -i))){
+                        res=bho.get(new Tuple2<>(s,curr-i));
+                        System.out.println("break!");
+                        break;
+                    }
+                    i++;
+                }
+            }
+            System.out.println(res);
         }
 
-        System.out.println("s= "+s);
+
+
+            String x2 = "[\"3\",\"1\"]";
+            String x = "[a,1]";
+            String[] array = x2.split("\"");
+            array = Arrays.stream(array).filter(k -> k.matches("[\\dA-Za-z]")).toArray(String[]::new);
+            //String array2 = Arrays.toString(array);
+            //System.out.println(Arrays.toString(array));
+        for(int j=0;j<array.length;j++){
+            System.out.println(array[j]);
+        }
+            System.out.println(array);
+
+
 
 
         /*

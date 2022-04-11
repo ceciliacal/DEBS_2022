@@ -1,6 +1,8 @@
 package utils;
 
 
+import scala.Int;
+
 public interface Config {
     //public static String KAFKA_BROKERS = "kafka1:19091";
     public static String KAFKA_BROKERS = "localhost:9091";
@@ -15,6 +17,7 @@ public interface Config {
     public static Integer windowLen = 5; //minutes
     public static Integer ema38 = 38;
     public static Integer ema100 = 100;
+    public static Integer maxLenSocket = 65535;
 
 
 }
