@@ -1,6 +1,5 @@
 package kafka;
 
-import com.google.protobuf.Descriptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -27,6 +26,8 @@ public class Producer {
     private static final Integer windowLen = 5; //minutes
     private static Map<Integer,Long> batchSeqId;       //to retrieve each bach when sending aggregated results
     private static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults;      //K: #batch+symbol V:ema38+ema100
+    private static Timestamp finalWindowLongBatch = null ;
+    private static Map<Integer,Result> mapResults;
 
     /*
     creates kafka producer
@@ -40,15 +41,40 @@ public class Producer {
         return new KafkaProducer<>(props);
     }
 
+    public static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> getIntermediateResults() {
+        return intermediateResults;
+    }
+
+    public static void setIntermediateResults(Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults) {
+        Producer.intermediateResults = intermediateResults;
+    }
+
+    public static Timestamp getFinalWindowLongBatch() {
+        return finalWindowLongBatch;
+    }
+
+    public static void setFinalWindowLongBatch(Timestamp finalWindowLongBatch) {
+        Producer.finalWindowLongBatch = finalWindowLongBatch;
+    }
+
+    public static Map<Integer, Result> getMapResults() {
+        return mapResults;
+    }
+
+    public static void setMapResults(Map<Integer, Result> mapResults) {
+        Producer.mapResults = mapResults;
+    }
 
     /*
-    kafka producer streams messages to kafka topic reading csv file
-     */
+                kafka producer streams messages to kafka topic reading csv file
+                 */
     public static void main(String[] args) throws Exception {
 
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
         batchSeqId = new HashMap<>();
         intermediateResults = new HashMap<>();
+        mapResults = new HashMap<>();
+        int longBatch = -1;
 
         //============================ starts MAIN gRPC ============================
 
@@ -89,11 +115,11 @@ public class Producer {
         SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
 
         while(true) {
+
             System.out.println("==== cnt: "+cnt);
 
             Batch batch = challengeClient.nextBatch(newBenchmark);
             batchSeqId.put(cnt,batch.getSeqId());
-
             num = batch.getEventsCount();
 
             if (batch.getLast()) { //Stop when we get the last batch
@@ -125,15 +151,17 @@ public class Producer {
             System.out.println("lastTsBatch = "+lastTsBatch);
             System.out.println("startTsBatch = "+startTsBatch);
 
-            Timestamp whenResult = null;
             System.out.println("---nextWindow INIZIO: "+nextWindow);
 
             System.out.println("diff = "+ (lastTsSeconds - startTsSeconds));
+
             if (lastTsSeconds - startTsSeconds > TimeUnit.MINUTES.toSeconds(windowLen)){
                 System.out.println("ts sta in piu finestre");
-                whenResult = windowProducingResult(lastTsBatch,nextWindow);
+                longBatch=cnt;
+                setFinalWindowLongBatch(windowProducingResult(lastTsBatch,nextWindow));
+
             }
-            System.out.println("whenResult = "+whenResult);
+            System.out.println("whenResult = "+ finalWindowLongBatch);
 
 
             for (i=0;i<num;i++){
@@ -181,32 +209,38 @@ public class Producer {
 
                     DataInputStream dis = new DataInputStream(s.getInputStream());
                     ss.close();
-                    //String str = (String) dis.readUTF();
-                    //String str = String.valueOf(dis.readAllBytes());
+
                     byte[] bytes = dis.readAllBytes();
                     String str = new String(bytes, StandardCharsets.UTF_8);
                     System.out.println("message = "+str);
-                    //System.out.println("str2 = "+str2);
 
 
-                    if(whenResult!=null){
+                    if(finalWindowLongBatch!=null){
                         System.out.println("WHEN RES È DIVERSO NULL! "+cnt);
                         //ci entro solo quando il batch sta in piu finestre ->
                         System.out.println("prev = "+prev);
-                        if (whenResult.compareTo(prev)>0){
+
+                        if (finalWindowLongBatch.compareTo(prev)>0){
                             System.out.println("NON HO FINITO "+cnt);
                             //todo: salva dentro a una mappa. salvo i dati intermedi che poi devo unire con i dati dei rimanenti titoli
                             //todo nel batch0 che mi arrivano alle 8.20. e devo salvarmi il numero del batch dentro alla mappa!
-                            putIntoMap(str);
+                            putIntoMap(str, longBatch);
                         }
                         System.out.println("intermediateResults = "+intermediateResults);
-                        if (whenResult.compareTo(prev)==0){
+
+                        if (lastTradeTimestamp.compareTo(finalWindowLongBatch)>0){
                             System.out.println("HO FINITO!!");
-                            putIntoMap(str);
+                            putIntoMap(str,longBatch);    //che hanno batch 0 !!!!!!!!
+                            System.out.println("intermediateResults finito= "+intermediateResults);
+                            //poi entra in calc indicators
                         }
                     }
+                    if(cnt!=longBatch){
+                        calculateIndicators(str,longBatch);
+                    }
 
-                    calculateIndicators(str);
+
+
 
                     //TODO: prendi ultimo ts dell ultimo batch e manda dato x chiudere
 
@@ -249,6 +283,7 @@ public class Producer {
             challengeClient.resultQ2(q2Result);
 
  */
+            //longBatch = -1;   //big batch just finished
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
@@ -264,35 +299,79 @@ public class Producer {
 
     }
 
-    public static void putIntoMap(String str) {
+    public static void putIntoMap(String str, int batchGrande) {
 
         String[] lines = str.split("\n");
         for (String line : lines) {
             String[] values = line.split(";");
-            intermediateResults.put(new Tuple2<>(Integer.valueOf(values[1]),values[2]), new Tuple2<>(Float.valueOf(values[3]),Float.valueOf(values[4])));
+            if (Integer.valueOf(values[1])==batchGrande){
+                intermediateResults.put(new Tuple2<>(Integer.valueOf(values[1]),values[2]), new Tuple2<>(Float.valueOf(values[3]),Float.valueOf(values[4])));
+            }
         }
+    }
+
+    public static void calculateResults(String str, int longBatch, int cnt){
+
+        String[] lines = str.split("\n");
+        for (String line : lines) {
+            String[] values = line.split(";");
+
+            if(Integer.valueOf(values[1])==longBatch) {  //se il batch della riga che sto analizzando coincide con longBatch
+                //prendo dalla mappa la key <longBatch,simboloCorrente> e aggiungo i relativi ema alla lista degli Indicator
+                System.out.println("sto in: (values[1])==longBatch");
+
+                Tuple2<Float, Float> emas = intermediateResults.get(new Tuple2<>(longBatch, values[2]));
+                //TODO: CONTROLLO SU LISTE TIMESTAMP!!!! NO NULL ma values[5] e [6]
+                Result res = new Result(values[2], emas._1, emas._2, null,null);
+                mapResults.put(Integer.valueOf(values[1]), res);
+            } else {    //altimenti il batch della riga che sto analizzando NON coincide con longBatch (è piccolo)
+                Result res = new Result(values[2], Float.parseFloat(values[3]), Float.parseFloat(values[4]), null,null);
+                mapResults.put(Integer.valueOf(values[1]), res);
+            }
+            //ho analizzato singola linea
+        }
+        //ho analizzato tutte le linee
+
+
     }
 
 
     //todo: se batchSize > window, devo mandare solo i risultati finali!
-    public static List<Indicator> calculateIndicators(String str) throws IOException, InterruptedException {
+    public static List<Indicator> calculateIndicators(String str, int longBatch) throws IOException, InterruptedException {
 
         System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!!");
-        /*
+        //todo SCORRI MAP RESULTS E COUNT
+
         List<Indicator> indicatorsList = new ArrayList<>();
         String[] lines = str.split("\n");
         for (String line : lines) {
-            String[] values = line.split(",");
-            Indicator.Builder ind = Indicator.newBuilder();
-            ind.setSymbol(values[2]);
-            ind.setEma38(Float.valueOf(values[3]));
-            ind.setEma100(Float.valueOf(values[4]));
+            String[] values = line.split(";");
 
-            indicatorsList.add(ind.build());
+            //todo: devo raggrupparli per batch!
+
+            if(Integer.valueOf(values[1])==longBatch){  //se il batch della riga che sto analizzando coincide con longBatch
+                //prendo dalla mappa la key <longBatch,simboloCorrente> e aggiungo i relativi ema alla lista degli Indicator
+                System.out.println("sto in: (values[1])==longBatch");
+                Indicator.Builder ind = Indicator.newBuilder();
+                Tuple2<Float, Float> emas = intermediateResults.get(new Tuple2<>(longBatch,values[2]));
+                ind.setSymbol(values[2]);
+                ind.setEma38(emas._1);
+                ind.setEma100(emas._2);
+                indicatorsList.add(ind.build());
+
+            } else {    //altimenti il batch della riga che sto analizzando NON coincide con longBatch (è piccolo)
+                Indicator.Builder ind = Indicator.newBuilder();
+                ind.setSymbol(values[2]);
+                ind.setEma38(Float.valueOf(values[3]));
+                ind.setEma100(Float.valueOf(values[4]));
+
+                indicatorsList.add(ind.build());
+            }
+
         }
         System.out.println("indicatorsList: "+indicatorsList);
 
-         */
+
         return new ArrayList<>();
 
     }

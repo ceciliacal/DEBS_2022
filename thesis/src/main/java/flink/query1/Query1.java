@@ -10,13 +10,10 @@ import org.apache.flink.util.Collector;
 
 import utils.Config;
 import data.Event;
-import utils.MyDataOutputStram;
 
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Date;
-
-import static utils.Config.maxLenSocket;
 
 
 public class Query1 {
@@ -40,7 +37,7 @@ public class Query1 {
                         Out1 res = elements.iterator().next();  //first element in iterator
 
                         String stringToSend = "0;"+
-                                res.getBatches2()+";"+
+                                res.getBatch()+";"+
                                 res.getSymbol()+";"+
                                 res.getSymbol_WindowEma38().get(res.getSymbol())._2+";"+
                                 res.getSymbol_WindowEma100().get(res.getSymbol())._2+";"+
@@ -53,29 +50,9 @@ public class Query1 {
                                 stringToSend = stringToSend;
                             } else{
 
-                                /*
-                                if(stringToSend.length()<maxLenSocket){
-
-
-                                }
-
-                                String s = i + ";" +
-                                        element.getBatches2() + ";" +
-                                        element.getSymbol() + ";" +
-                                        element.getSymbol_WindowEma38().get(element.getSymbol())._2 + ";" +
-                                        element.getSymbol_WindowEma100().get(element.getSymbol())._2 + ";" +
-                                        element.getSymbol_buyCrossovers().get(element.getSymbol()) + ";" +
-                                        element.getSymbol_sellCrossovers().get(element.getSymbol()) + "\n";
-
-                                if (stringToSend.length()+s.length()>maxLenSocket){
-
-                                }
-
-                                 */
-
                                 stringToSend = stringToSend +
                                         i+";"+
-                                        element.getBatches2()+";"+
+                                        element.getBatch()+";"+
                                         element.getSymbol()+";"+
                                         element.getSymbol_WindowEma38().get(element.getSymbol())._2+";"+
                                         element.getSymbol_WindowEma100().get(element.getSymbol())._2+";"+

@@ -9,8 +9,7 @@ import java.util.Map;
 public class Out1 {
 
     private String symbol;
-    private String batches2;
-    //private List<Integer> batches;
+    private Integer batch;
     private Map<String, Tuple2<Integer,Float>> symbol_WindowEma38;
     private Map<String, Tuple2<Integer,Float>> symbol_WindowEma100;
     private Float price;
@@ -18,9 +17,9 @@ public class Out1 {
     private Map<String, List<Timestamp>> symbol_sellCrossovers;
 
 
-    public Out1(String symbol, String batches2, Map<String, Tuple2<Integer, Float>> symbol_WindowEma38, Map<String, Tuple2<Integer, Float>> symbol_WindowEma100, Float price, Map<String, List<Timestamp>> symbol_buyCrossovers, Map<String, List<Timestamp>> symbol_sellCrossovers) {
+    public Out1(String symbol, Integer batch, Map<String, Tuple2<Integer, Float>> symbol_WindowEma38, Map<String, Tuple2<Integer, Float>> symbol_WindowEma100, Float price, Map<String, List<Timestamp>> symbol_buyCrossovers, Map<String, List<Timestamp>> symbol_sellCrossovers) {
         this.symbol = symbol;
-        this.batches2 = batches2;
+        this.batch = batch;
         this.symbol_WindowEma38 = symbol_WindowEma38;
         this.symbol_WindowEma100 = symbol_WindowEma100;
         this.price = price;
@@ -78,19 +77,19 @@ public class Out1 {
         this.symbol_sellCrossovers = symbol_sellCrossovers;
     }
 
-    public String getBatches2() {
-        return batches2;
+    public Integer getBatch() {
+        return batch;
     }
 
-    public void setBatches2(String batches2) {
-        this.batches2 = batches2;
+    public void setBatch(Integer batch) {
+        this.batch = batch;
     }
 
     @Override
     public String toString() {
         return "Out1{" +
                 "symbol='" + symbol + '\'' +
-                ", batches2='" + batches2 + '\'' +
+                ", batch=" + batch +
                 ", symbol_WindowEma38=" + symbol_WindowEma38 +
                 ", symbol_WindowEma100=" + symbol_WindowEma100 +
                 ", price=" + price +

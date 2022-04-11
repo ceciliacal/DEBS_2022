@@ -223,23 +223,13 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         symbol_buyCrossovers.put(s,lastThreeBuys);
         symbol_sellCrossovers.put(s, lastThreeSells);
 
+
         List<Integer> currBatches = symbolInBatches.get(s);
-        String myBatches="";
-
-        for(int j=0;j<currBatches.size();j++){
-
-            if (j<currBatches.size()-1){
-                myBatches=myBatches+ currBatches.get(j) +",";
-            } else {
-                myBatches=myBatches+ currBatches.get(j);
-            }
-        }
-
-        Out1 bho2 = new Out1(s, myBatches, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
-        out.collect(bho2);
-
-
-
+        currBatches.stream().forEach(batch -> {
+            Out1 bho = new Out1(s, batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
+            //System.out.println("bho = "+bho);
+            out.collect(bho);
+        });
 
 
         /*
