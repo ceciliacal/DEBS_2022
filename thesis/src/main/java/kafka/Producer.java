@@ -200,8 +200,10 @@ public class Producer {
 
                     ServerSocket ss = new ServerSocket(6667);
                     Timestamp prev = nextWindow;
-                    next = next + TimeUnit.MINUTES.toMillis(windowLen);
-                    nextWindow = new Timestamp(next);
+                    //next = upper bound di lastTradeTimestamp
+                    nextWindow = windowProducingResult(lastTradeTimestamp, nextWindow);
+                    //next = next + TimeUnit.MINUTES.toMillis(windowLen);
+                    //nextWindow = new Timestamp(next);
 
                     System.out.println("NELL IF ");
                     System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
@@ -243,9 +245,10 @@ public class Producer {
                             //System.out.println("prima calcIndic - i: "+i);
                             List<Indicator> indicatorsList = calculateIndicators(batchesInCurrentWindow.get(i));
                             //System.out.println("indicatorsList = "+indicatorsList);
+                            System.out.println("batchesInCurrentWindow.get(i) = "+batchesInCurrentWindow.get(i));
                             ResultQ1 q1Result = ResultQ1.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
-                                    .setBatchSeqId(batchSeqId.get(cnt)) //set the sequence number
+                                    .setBatchSeqId(batchSeqId.get(batchesInCurrentWindow.get(i))) //set the sequence number
                                     .addAllIndicators(indicatorsList)
                                     .build();
                             challengeClient.resultQ1(q1Result);
@@ -255,7 +258,7 @@ public class Producer {
 
                             ResultQ2 q2Result = ResultQ2.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
-                                    .setBatchSeqId(batch.getSeqId()) //set the sequence number
+                                    .setBatchSeqId(batchSeqId.get(batchesInCurrentWindow.get(i))) //set the sequence number
                                     .addAllCrossoverEvents(crossoverEventList)
                                     .build();
 
@@ -277,10 +280,15 @@ public class Producer {
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
+
             //todo: prima era 100
             if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
+
+
+
+
         }
 
         challengeClient.endBenchmark(newBenchmark);
@@ -389,7 +397,7 @@ public class Producer {
         //qui ho risultati del batch i-esimo -> ho list<Indicator> del batch i-esimo
 
 
-    //System.out.println("indicatorsList: "+indicatorsList);
+        //System.out.println("indicatorsList: "+indicatorsList);
 
 
         return indicatorsList;
@@ -440,28 +448,28 @@ public class Producer {
 
         List<Result> resList = finalResults.get(i);
         resList.stream().forEach(res -> {
-             CrossoverEvent.Builder cross = CrossoverEvent.newBuilder();
-             cross.setSymbol(res.getSymbol());
-             if (res.getBuys()!=null){  //se quel simbolo non ha crossover (lista è null)
-              //se li ha, allora li metto uno a uno nel setTs
-                 for(Timestamp ts: res.getBuys()){  //set buys (at maximum, they're 3)
-                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
+            CrossoverEvent.Builder cross = CrossoverEvent.newBuilder();
+            cross.setSymbol(res.getSymbol());
+            if (res.getBuys()!=null){  //se quel simbolo non ha crossover (lista è null)
+                //se li ha, allora li metto uno a uno nel setTs
+                for(Timestamp ts: res.getBuys()){  //set buys (at maximum, they're 3)
+                    com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
                      /*
                      if (res.getSymbol().equals("IEBBB.FR")){
                          System.out.println("timestamp= "+new Timestamp(timestamp.getSeconds()));
                      }
                       */
-                     cross.setTs(timestamp);
-                 }
-             }
-             if (res.getSells()!=null){
-                 for(Timestamp ts: res.getSells()){  //set sells (at maximum, they're 3)
-                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
-                     cross.setTs(timestamp);
-                 }
-             }
+                    cross.setTs(timestamp);
+                }
+            }
+            if (res.getSells()!=null){
+                for(Timestamp ts: res.getSells()){  //set sells (at maximum, they're 3)
+                    com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
+                    cross.setTs(timestamp);
+                }
+            }
 
-             crossoverEventList.add(cross.build());
+            crossoverEventList.add(cross.build());
         });
         return new ArrayList<>();
     }

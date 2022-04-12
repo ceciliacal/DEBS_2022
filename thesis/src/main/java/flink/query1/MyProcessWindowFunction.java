@@ -32,17 +32,9 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         windowStartDate.setTime(windowStart);
         Timestamp windowEndTs = new Timestamp(context.window().getEnd());
         OutputQ1 res = elements.iterator().next();
+
         Map<String, Float> lastPricePerSymbol = res.getLastPricePerSymbol();
         Map<String, List<Integer>> symbolInBatches = res.getSymbolInBatches();
-
-        int currentWindowCount=0;
-        while(true){
-            if (Consumer.getStartTime()+(currentWindowCount* TimeUnit.MINUTES.toMillis(5))!=windowStart){
-                currentWindowCount++;
-            } else {
-                break;
-            }
-        }
 
         if (count==null){
             count = new HashMap<>();
@@ -90,6 +82,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
 
+        /*
         float temp0 = myEma38.get(new Tuple2<>(s,0));
         float temp2 = 0;
         float temp3 = 0;
@@ -114,6 +107,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             myEma38.put(new Tuple2<>(s,count.get(s)-1), (float) -1);
         }
 
+         */
+
 
 
 
@@ -124,7 +119,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         if (count.get(s)>0){
-//TODO PROVA A FARE REMOVE DI IEBBB TIPO IN FINESTRA 1 O 2
+        //TODO PROVA A FARE REMOVE DI IEBBB TIPO IN FINESTRA 1 O 2
             if (myEma38.containsKey(new Tuple2<>(s,count.get(s)-1)) && myEma100.containsKey(new Tuple2<>(s,count.get(s)-1))){
 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) > myEma100.get(new Tuple2<>(s,count.get(s)))) {
@@ -147,7 +142,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) < myEma100.get(new Tuple2<>(s,count.get(s)))){
                     if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) >= myEma100.get(new Tuple2<>(s,count.get(s)-1))) {
                         //sell
-                        System.out.println("SELL!!");
+                        System.out.println("SELL!! "+s);
                         if (!sellCrossovers2.containsKey(s)){
                             List<Timestamp> ts = new ArrayList<>();
                             ts.add(windowEndTs);
@@ -171,7 +166,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         Map<String, Tuple2<Integer,Float>> symbol_WindowEma100 = new HashMap<>();
 
         symbol_WindowEma38.put(s, new Tuple2<>(count.get(s),myEma38.get(new Tuple2<>(s,count.get(s)))));
-        symbol_WindowEma100.put(s, new Tuple2<>(currentWindowCount,myEma100.get(new Tuple2<>(s,count.get(s)))));
+        symbol_WindowEma100.put(s, new Tuple2<>(count.get(s),myEma100.get(new Tuple2<>(s,count.get(s)))));
 
 
         /*
@@ -198,7 +193,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             } else if (sizeBuy==1){
                 lastThreeBuys.add(buyCrossovers2.get(s).get(sizeBuy-1));
             }
-            System.out.println("lastThreeBuys = "+ lastThreeBuys);
+            System.out.println(s+" "+windowStartDate+" - lastThreeBuys = "+ lastThreeBuys);
         }
 
         List<Timestamp> lastThreeSells = null;
@@ -215,7 +210,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
             } else if (sizeSell==1){
                 lastThreeSells.add(sellCrossovers2.get(s).get(sizeSell-1));
             }
-            System.out.println("lastThreeSells = "+ lastThreeSells);
+            System.out.println(s+" "+windowStartDate+" - lastThreeSells = "+ lastThreeSells );
         }
 
         Map<String, List<Timestamp>> symbol_buyCrossovers = new HashMap<>();
@@ -232,7 +227,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         });
 
 
-
+/*
         if (s.equals("IEBBB.FR")&&count.get(s)==1){
             myEma38.put(new Tuple2<>(s,1), temp0);
 
@@ -249,6 +244,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         if (s.equals("IEBBB.FR")&&count.get(s)==4){
             myEma38.put(new Tuple2<>(s,4), temp4);
         }
+
+ */
 
 
 

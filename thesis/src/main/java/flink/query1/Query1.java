@@ -61,14 +61,14 @@ public class Query1 {
                                         ;
 
                             }
-                            if (element.getSymbol().equals("IEBBB.FR")){
+                            //if (element.getSymbol().equals("IEBBB.FR")){
                                 System.out.println(new Date(context.window().getStart()) + " " + element);
 
-                            }
+                            //}
                             i++;
                         }
 
-                        System.out.println("strlen = "+stringToSend.length());
+                        //System.out.println("strlen = "+stringToSend.length());
 
                         //todo: check strlen e se è maggiore di quel valore usa una nuova stringa.
                         //magari fai while strlen<valore.
