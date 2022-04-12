@@ -89,7 +89,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         }
 
 
-/*
+
         float temp0 = myEma38.get(new Tuple2<>(s,0));
         float temp2 = 0;
         float temp3 = 0;
@@ -121,7 +121,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         //======= FINE PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
 
 
- */
+ 
 
         if (count.get(s)>0){
 
