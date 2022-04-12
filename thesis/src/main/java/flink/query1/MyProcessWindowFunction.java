@@ -124,7 +124,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         if (count.get(s)>0){
-
+//TODO PROVA A FARE REMOVE DI IEBBB TIPO IN FINESTRA 1 O 2
             if (myEma38.containsKey(new Tuple2<>(s,count.get(s)-1)) && myEma100.containsKey(new Tuple2<>(s,count.get(s)-1))){
 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) > myEma100.get(new Tuple2<>(s,count.get(s)))) {
@@ -222,8 +222,6 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         Map<String, List<Timestamp>> symbol_sellCrossovers = new HashMap<>();
         symbol_buyCrossovers.put(s,lastThreeBuys);
         symbol_sellCrossovers.put(s, lastThreeSells);
-
-        System.out.println("ISBIW.FR: "+symbol_buyCrossovers.get("ISBIW.FR"));
 
 
         List<Integer> currBatches = symbolInBatches.get(s);

@@ -214,7 +214,7 @@ public class Producer {
 
                     byte[] bytes = dis.readAllBytes();
                     String str = new String(bytes, StandardCharsets.UTF_8);
-                    System.out.println("message = "+str);
+                    //System.out.println("message = "+str);
 
 
                     if(finalWindowLongBatch!=null){
@@ -239,7 +239,8 @@ public class Producer {
                         List<Integer> batchesInCurrentWindow = calculateResults(str, longBatch);
 
                         for(i=0;i<batchesInCurrentWindow.size();i++) {
-                            System.out.println("prima calcIndic - i: "+i);
+                            //sending query1 results
+                            //System.out.println("prima calcIndic - i: "+i);
                             List<Indicator> indicatorsList = calculateIndicators(batchesInCurrentWindow.get(i));
                             //System.out.println("indicatorsList = "+indicatorsList);
                             ResultQ1 q1Result = ResultQ1.newBuilder()
@@ -249,8 +250,19 @@ public class Producer {
                                     .build();
                             challengeClient.resultQ1(q1Result);
 
-                            //todo calculate query2
-                            System.out.println("---fineITERAZ---");
+                            //sending query2 results
+                            List<CrossoverEvent> crossoverEventList = calculateCrossoverEvents(batchesInCurrentWindow.get(i));
+
+                            ResultQ2 q2Result = ResultQ2.newBuilder()
+                                    .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
+                                    .setBatchSeqId(batch.getSeqId()) //set the sequence number
+                                    .addAllCrossoverEvents(crossoverEventList)
+                                    .build();
+
+                            challengeClient.resultQ2(q2Result);
+
+
+                            //System.out.println("---fineITERAZ---");
                         }
 
                     }
@@ -262,39 +274,11 @@ public class Producer {
 
             //=========== end of send data ===========
 
-/*
-            //process the batch of events we have
-            List<Indicator> q1Results = null;
-            q1Results = calculateIndicators(batch, cnt, producer);
-
-
-            ResultQ1 q1Result = ResultQ1.newBuilder()
-                    .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
-                    .setBatchSeqId(batch.getSeqId()) //set the sequence number
-                    .addAllIndicators(q1Results)
-                    .build();
-
-            //return the result of Q1
-            challengeClient.resultQ1(q1Result);
-
-
-            var crossOverevents = calculateCrossoverEvents(batch);
-
-            ResultQ2 q2Result = ResultQ2.newBuilder()
-                    .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
-                    .setBatchSeqId(batch.getSeqId()) //set the sequence number
-                    .addAllCrossoverEvents(crossOverevents)
-                    .build();
-
-            challengeClient.resultQ2(q2Result);
-
- */
-            //longBatch = -1;   //big batch just finished
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
@@ -418,22 +402,22 @@ public class Producer {
         List<Timestamp> list = new ArrayList<>();
         String[] line = str.split(",");
         int len = line.length;
-        //System.out.println("len = "+len);
+
         if (len>1){
             line[0] = line[0].substring(1);
             int lastStrlen = line[len-1].length();
             line[len-1] = line[len-1].substring(0,lastStrlen-1);
         } else {
             int lastStrlen = line[0].length();
-            //System.out.println("lastStrlen = "+lastStrlen);
             line[0]  = line[0].substring(1,lastStrlen-1);
         }
+
         for (String s : line) {
-            //TRASFORMO IN LISTA DI TS
+            //trasform string array in timestamp list
             Timestamp ts = Producer.stringToTimestamp(s, 0);
             list.add(ts);
         }
-        //System.out.println("list = "+list);
+
         return list;
     }
 
@@ -449,9 +433,36 @@ public class Producer {
         return new Timestamp(res);
     }
 
-    public static List<CrossoverEvent> calculateCrossoverEvents(Batch batch) {
-        //TODO: improve this implementation
+    public static List<CrossoverEvent> calculateCrossoverEvents(int i) {
+        //System.out.println("STO IN CROSSOVERS!!!!!!!!!!! + i="+i);
 
+        List<CrossoverEvent> crossoverEventList = new ArrayList<>();
+
+        List<Result> resList = finalResults.get(i);
+        resList.stream().forEach(res -> {
+             CrossoverEvent.Builder cross = CrossoverEvent.newBuilder();
+             cross.setSymbol(res.getSymbol());
+             if (res.getBuys()!=null){  //se quel simbolo non ha crossover (lista è null)
+              //se li ha, allora li metto uno a uno nel setTs
+                 for(Timestamp ts: res.getBuys()){  //set buys (at maximum, they're 3)
+                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
+                     /*
+                     if (res.getSymbol().equals("IEBBB.FR")){
+                         System.out.println("timestamp= "+new Timestamp(timestamp.getSeconds()));
+                     }
+                      */
+                     cross.setTs(timestamp);
+                 }
+             }
+             if (res.getSells()!=null){
+                 for(Timestamp ts: res.getSells()){  //set sells (at maximum, they're 3)
+                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
+                     cross.setTs(timestamp);
+                 }
+             }
+
+             crossoverEventList.add(cross.build());
+        });
         return new ArrayList<>();
     }
 
