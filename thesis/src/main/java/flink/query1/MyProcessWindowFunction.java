@@ -60,7 +60,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
         }
 
-        System.out.println("window: "+windowStartDate+" - "+windowEndTs);
+        //System.out.println("window: "+windowStartDate+" - "+windowEndTs);
         //System.out.println("FINAL: k= "+s+" v= "+count.get(s)+"  "+windowStartDate);
 
         if (myEma38==null){
@@ -121,7 +121,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         //======= FINE PROVA QUERY2 CON IEBBB. TODO: DOPO TOGLI! ===========
 
 
- 
+
 
         if (count.get(s)>0){
 
@@ -223,6 +223,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         symbol_buyCrossovers.put(s,lastThreeBuys);
         symbol_sellCrossovers.put(s, lastThreeSells);
 
+        System.out.println("ISBIW.FR: "+symbol_buyCrossovers.get("ISBIW.FR"));
+
 
         List<Integer> currBatches = symbolInBatches.get(s);
         currBatches.stream().forEach(batch -> {
@@ -232,7 +234,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
         });
 
 
-        /*
+
         if (s.equals("IEBBB.FR")&&count.get(s)==1){
             myEma38.put(new Tuple2<>(s,1), temp0);
 
@@ -244,13 +246,13 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQ1, Out
 
 
         if (s.equals("IEBBB.FR")&&count.get(s)==3){
-            myEma38.put(new Tuple2<>(s,2), temp3);
+            myEma38.put(new Tuple2<>(s,3), temp3);
         }
         if (s.equals("IEBBB.FR")&&count.get(s)==4){
-            myEma38.put(new Tuple2<>(s,2), temp4);
+            myEma38.put(new Tuple2<>(s,4), temp4);
         }
 
-         */
+
 
 
 

@@ -61,7 +61,10 @@ public class Query1 {
                                         ;
 
                             }
-                            System.out.println(new Date(context.window().getStart()) + " " + element);
+                            if (element.getSymbol().equals("IEBBB.FR")){
+                                System.out.println(new Date(context.window().getStart()) + " " + element);
+
+                            }
                             i++;
                         }
 

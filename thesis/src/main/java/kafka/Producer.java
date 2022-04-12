@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -213,7 +214,7 @@ public class Producer {
 
                     byte[] bytes = dis.readAllBytes();
                     String str = new String(bytes, StandardCharsets.UTF_8);
-                    //System.out.println("message = "+str);
+                    System.out.println("message = "+str);
 
 
                     if(finalWindowLongBatch!=null){
@@ -240,6 +241,7 @@ public class Producer {
                         for(i=0;i<batchesInCurrentWindow.size();i++) {
                             System.out.println("prima calcIndic - i: "+i);
                             List<Indicator> indicatorsList = calculateIndicators(batchesInCurrentWindow.get(i));
+                            //System.out.println("indicatorsList = "+indicatorsList);
                             ResultQ1 q1Result = ResultQ1.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
                                     .setBatchSeqId(batchSeqId.get(cnt)) //set the sequence number
@@ -292,7 +294,7 @@ public class Producer {
             ++cnt;
 
             //todo: prima era 100
-            if(cnt > 0) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
         }
@@ -317,8 +319,10 @@ public class Producer {
     //serve a popolare mappa finalResults
     public static List<Integer> calculateResults(String str, int longBatch) throws IOException, InterruptedException {
         System.out.println("STO IN CALCULATERES!!");
+        Result res;
         List<Integer> batchesInCurrentWindow = new ArrayList<>();
-
+        List<Timestamp> buysTs = null;
+        List<Timestamp> sellsTs = null;
         finalResults = new HashMap<>();     //per ogni finestra lo riazzero
 
         String[] lines = str.split("\n");
@@ -330,31 +334,45 @@ public class Producer {
                 batchesInCurrentWindow.add(currBatch);
             }
             //System.out.println("currBatch= "+currBatch);
-            Result res;
+
+            if (!values[5].equals("null")) {
+                //parse lista ts
+                buysTs = createTimestampsList(values[5]);
+            }
+            else if(!values[6].equals("null")){
+                sellsTs = createTimestampsList(values[6]);
+            }
 
             if(currBatch==longBatch) {  //se il batch della riga che sto analizzando coincide con longBatch
-                //prendo dalla mappa la key <longBatch,simboloCorrente> e aggiungo i relativi ema alla lista degli Indicator
+                //prendo dalla mappa intermediate la key <longBatch,simboloCorrente> e aggiungo i relativi ema alla lista di Result per popolare finalResults
                 //System.out.println("sto in: currBatch==longBatch");
-
                 Tuple2<Float, Float> emas = intermediateResults.get(new Tuple2<>(longBatch, values[2]));
-
-                //TODO: CONTROLLO SU LISTE TIMESTAMP!!!! NO NULL ma values[5] e [6]
                 res = new Result(values[2], emas._1, emas._2, null, null);
             } else {
                 res = new Result(values[2], Float.parseFloat(values[3]), Float.parseFloat(values[4]), null,null);
             }
-                if(!finalResults.containsKey(currBatch)){
-                    List<Result> resList = new ArrayList<>();
-                    resList.add(res);
-                    finalResults.put(currBatch,resList);
-                    //System.out.println("NOT");
-                } else {
-                    List<Result> resList = finalResults.get(currBatch);
-                    resList.add(res);
-                    finalResults.put(currBatch,resList);
-                    //System.out.println("YES");
-                }
+
+            if (buysTs!=null){
+                res.setBuys(buysTs);
+                //System.out.println("res BUY: "+res);
+            } else if (sellsTs!=null){
+                res.setSells(sellsTs);
+            }
+
+            if(!finalResults.containsKey(currBatch)){
+                List<Result> resList = new ArrayList<>();
+                resList.add(res);
+                finalResults.put(currBatch,resList);
+                //System.out.println("NOT");
+            } else {
+                List<Result> resList = finalResults.get(currBatch);
+                resList.add(res);
+                finalResults.put(currBatch,resList);
+                //System.out.println("YES");
+            }
             //ho analizzato singola linea
+            buysTs = null;
+            sellsTs = null;
         } //ho analizzato tutte le linee
 
         //System.out.println("finalResults = "+finalResults);
@@ -364,7 +382,7 @@ public class Producer {
 
     public static List<Indicator> calculateIndicators(int i) throws IOException, InterruptedException {
 
-        System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!! + i="+i);
+        //System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!! + i="+i);
         List<Indicator> indicatorsList = new ArrayList<>();
 
         List<Result> resList = finalResults.get(i);
@@ -392,6 +410,31 @@ public class Producer {
 
         return indicatorsList;
 
+    }
+
+    public static List<Timestamp> createTimestampsList(String str){
+        //String str = "[2021-11-08 08:10:00.0]";
+
+        List<Timestamp> list = new ArrayList<>();
+        String[] line = str.split(",");
+        int len = line.length;
+        //System.out.println("len = "+len);
+        if (len>1){
+            line[0] = line[0].substring(1);
+            int lastStrlen = line[len-1].length();
+            line[len-1] = line[len-1].substring(0,lastStrlen-1);
+        } else {
+            int lastStrlen = line[0].length();
+            //System.out.println("lastStrlen = "+lastStrlen);
+            line[0]  = line[0].substring(1,lastStrlen-1);
+        }
+        for (String s : line) {
+            //TRASFORMO IN LISTA DI TS
+            Timestamp ts = Producer.stringToTimestamp(s, 0);
+            list.add(ts);
+        }
+        //System.out.println("list = "+list);
+        return list;
     }
 
     public static Timestamp windowProducingResult(Timestamp lastTs,Timestamp nextWindow){
