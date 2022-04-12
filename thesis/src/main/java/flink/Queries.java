@@ -1,4 +1,4 @@
-package flink.query1;
+package flink;
 
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
@@ -16,7 +16,7 @@ import java.net.Socket;
 import java.util.Date;
 
 
-public class Query1 {
+public class Queries {
 
     public static void runQuery1(DataStream<Event> stream){
 
@@ -28,13 +28,13 @@ public class Query1 {
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
                 .setParallelism(3)
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(Config.windowLen)))
-                .process(new ProcessAllWindowFunction<Out1, Out1, TimeWindow>() {
+                .process(new ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>() {
                     @Override
-                    public void process(ProcessAllWindowFunction<Out1, Out1, TimeWindow>.Context context, Iterable<Out1> elements, Collector<Out1> out) throws Exception {
+                    public void process(ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>.Context context, Iterable<FinalOutput> elements, Collector<FinalOutput> out) throws Exception {
 
                         System.out.println("in processALL "+new Date(System.currentTimeMillis()));
                         int i = 0;
-                        Out1 res = elements.iterator().next();  //first element in iterator
+                        FinalOutput res = elements.iterator().next();  //first element in iterator
 
                         String stringToSend = "0;"+
                                 res.getBatch()+";"+
@@ -45,7 +45,7 @@ public class Query1 {
                                 res.getSymbol_sellCrossovers().get(res.getSymbol())+"\n"
                                 ;
 
-                        for (Out1 element : elements) {
+                        for (FinalOutput element : elements) {
                             if (i==0){
                                 stringToSend = stringToSend;
                             } else{
@@ -61,28 +61,18 @@ public class Query1 {
                                         ;
 
                             }
-                            //if (element.getSymbol().equals("IEBBB.FR")){
-                                System.out.println(new Date(context.window().getStart()) + " " + element);
 
-                            //}
+                            System.out.println(new Date(context.window().getStart()) + " " + element);
                             i++;
                         }
 
-                        //System.out.println("strlen = "+stringToSend.length());
-
-                        //todo: check strlen e se è maggiore di quel valore usa una nuova stringa.
-                        //magari fai while strlen<valore.
-
                         Socket s = new Socket("localhost",6667);
-                      DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-
-                       // MyDataOutputStram dout = new MyDataOutputStram(s.getOutputStream());
-
+                        DataOutputStream dout = new DataOutputStream(s.getOutputStream());
                         dout.writeBytes(stringToSend);
-
                         dout.flush();
                         dout.close();
                         s.close();
+
                         out.collect(res);
 
                     }

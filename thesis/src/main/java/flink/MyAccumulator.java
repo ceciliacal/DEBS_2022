@@ -1,4 +1,4 @@
-package flink.query1;
+package flink;
 
 import data.Event;
 
@@ -23,12 +23,12 @@ import java.util.Map;
 * @param <R> Type of the accumulator result as it will be reported to the client
 */
 
-public class AccumulatorQ1 implements Serializable {
+public class MyAccumulator implements Serializable {
 
     private Map<String, Float> lastPricePerSymbol;      //K:symbol - V:last price
     private Map<String, List<Integer>> symbolInBatches; //K:symbol - V:list of batches num
 
-    public AccumulatorQ1(){
+    public MyAccumulator(){
         this.lastPricePerSymbol = new HashMap<>();
         this.symbolInBatches = new HashMap<>();
     }

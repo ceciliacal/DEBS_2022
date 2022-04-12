@@ -1,4 +1,4 @@
-package flink.query1;
+package flink;
 
 import scala.Tuple2;
 
@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
-public class Out1 {
+public class FinalOutput {
 
     private String symbol;
     private Integer batch;
@@ -17,7 +17,7 @@ public class Out1 {
     private Map<String, List<Timestamp>> symbol_sellCrossovers;
 
 
-    public Out1(String symbol, Integer batch, Map<String, Tuple2<Integer, Float>> symbol_WindowEma38, Map<String, Tuple2<Integer, Float>> symbol_WindowEma100, Float price, Map<String, List<Timestamp>> symbol_buyCrossovers, Map<String, List<Timestamp>> symbol_sellCrossovers) {
+    public FinalOutput(String symbol, Integer batch, Map<String, Tuple2<Integer, Float>> symbol_WindowEma38, Map<String, Tuple2<Integer, Float>> symbol_WindowEma100, Float price, Map<String, List<Timestamp>> symbol_buyCrossovers, Map<String, List<Timestamp>> symbol_sellCrossovers) {
         this.symbol = symbol;
         this.batch = batch;
         this.symbol_WindowEma38 = symbol_WindowEma38;

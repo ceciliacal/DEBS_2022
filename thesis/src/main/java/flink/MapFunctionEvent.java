@@ -1,4 +1,4 @@
-package flink.query1;
+package flink;
 
 import data.Event;
 import kafka.Consumer;

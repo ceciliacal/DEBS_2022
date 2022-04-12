@@ -42,33 +42,9 @@ public class Producer {
         return new KafkaProducer<>(props);
     }
 
-    public static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> getIntermediateResults() {
-        return intermediateResults;
-    }
-
-    public static void setIntermediateResults(Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults) {
-        Producer.intermediateResults = intermediateResults;
-    }
-
-    public static Timestamp getFinalWindowLongBatch() {
-        return finalWindowLongBatch;
-    }
-
-    public static void setFinalWindowLongBatch(Timestamp finalWindowLongBatch) {
-        Producer.finalWindowLongBatch = finalWindowLongBatch;
-    }
-
-    public static Map<Integer,List<Result>> getFinalResults() {
-        return finalResults;
-    }
-
-    public static void setFinalResults(Map<Integer,List<Result>> finalResults) {
-        Producer.finalResults = finalResults;
-    }
-
     /*
-                kafka producer streams messages to kafka topic reading csv file
-                 */
+    kafka producer streams messages to kafka topic reading csv file
+     */
     public static void main(String[] args) throws Exception {
 
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
@@ -118,9 +94,7 @@ public class Producer {
         while(true) {
 
             System.out.println("==== cnt: "+cnt);
-
             Batch batch = challengeClient.nextBatch(newBenchmark);
-
             if (batch==null){
                 batch = challengeClient.nextBatch(newBenchmark);
             }
@@ -130,7 +104,7 @@ public class Producer {
 
             if (batch.getLast()) { //Stop when we get the last batch
                 System.out.println("Received lastbatch, finished!");
-                break;  //todo ultimo batch fallo qui e sposta questo if sotto
+                break;
             }
 
 
@@ -163,26 +137,24 @@ public class Producer {
                 setFinalWindowLongBatch(windowProducingResult(lastTsBatch,nextWindow));
 
             }
-            System.out.println("whenResult = "+ finalWindowLongBatch);
+            System.out.println("finalWindowLongBatch = "+ finalWindowLongBatch);
 
 
             for (i=0;i<num;i++){
 
                 currSeconds = batch.getEvents(i).getLastTrade().getSeconds();
-                Timestamp lastTradeTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
-                assert lastTradeTimestamp != null;
+                Timestamp currentTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
+                assert currentTimestamp != null;
 
-                //System.out.println("cnt = "+cnt+" lastTradeTimestamp: "+lastTradeTimestamp+" nextWindow: "+nextWindow);
                 value[0][0] = batch.getEvents(i).getSymbol();
                 value[0][1] = String.valueOf(batch.getEvents(i).getSecurityType());
-                value[0][2] = String.valueOf(lastTradeTimestamp);
+                value[0][2] = String.valueOf(currentTimestamp);
                 value[0][3] = String.valueOf(batch.getEvents(i).getLastTradePrice());
                 value[0][4] = String.valueOf(cnt);     //batch number
                 value[0][5] = String.valueOf(i);       //event number inside of current batch
                 valueToSend[0] = String.join(",", value[0]);
 
-                ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, lastTradeTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
-                //System.out.println("producerRecord-> long: "+ producerRecord.timestamp()+ " key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currentTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
 
                 producer.send(producerRecord, (metadata, exception) -> {
                     if(metadata != null){
@@ -196,17 +168,14 @@ public class Producer {
                 });
 
 
-                if (lastTradeTimestamp.compareTo(nextWindow)>0){
+                if (currentTimestamp.compareTo(nextWindow)>0){
 
                     ServerSocket ss = new ServerSocket(6667);
                     Timestamp prev = nextWindow;
-                    //next = upper bound di lastTradeTimestamp
-                    nextWindow = windowProducingResult(lastTradeTimestamp, nextWindow);
-                    //next = next + TimeUnit.MINUTES.toMillis(windowLen);
-                    //nextWindow = new Timestamp(next);
+                    nextWindow = windowProducingResult(currentTimestamp, nextWindow);
 
                     System.out.println("NELL IF ");
-                    System.out.println("lastTradeTimestamp: "+lastTradeTimestamp);
+                    System.out.println("currentTimestamp: "+currentTimestamp);
                     System.out.println("nextWindow: "+nextWindow);
 
                     Socket s = ss.accept();
@@ -220,9 +189,7 @@ public class Producer {
 
 
                     if(finalWindowLongBatch!=null){
-                        //System.out.println("WHEN RES È DIVERSO NULL! "+cnt);
                         //ci entro solo quando il batch sta in piu finestre ->
-                        //System.out.println("prev = "+prev);
 
                         if (finalWindowLongBatch.compareTo(prev)>0){
                             System.out.println("NON HO FINITO "+cnt);
@@ -230,7 +197,7 @@ public class Producer {
                         }
                         //System.out.println("intermediateResults = "+intermediateResults);
 
-                        if (lastTradeTimestamp.compareTo(finalWindowLongBatch)>0){
+                        if (currentTimestamp.compareTo(finalWindowLongBatch)>0){
                             System.out.println("HO FINITO!!");
                             putIntoMap(str,longBatch);    //che hanno batch 0 !!!!!!!!
                             //System.out.println("intermediateResults finito= "+intermediateResults);
@@ -269,7 +236,6 @@ public class Producer {
                         }
 
                     }
-                    //TODO: prendi ultimo ts dell ultimo batch e manda dato x chiudere
 
                 }
 
@@ -285,8 +251,6 @@ public class Producer {
             if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
-
-
 
 
         }
@@ -376,11 +340,8 @@ public class Producer {
 
         //System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!! + i="+i);
         List<Indicator> indicatorsList = new ArrayList<>();
-
         List<Result> resList = finalResults.get(i);
-        //System.out.println("finalResults.: "+finalResults);
-        //System.out.println("i: "+i);
-        //System.out.println("resList: "+resList);
+
         resList.stream().forEach(res -> {
             //indicator
             Indicator.Builder ind = Indicator.newBuilder();
@@ -389,15 +350,11 @@ public class Producer {
             ind.setEma100(Float.valueOf(res.getEma100()));
             //add list indicator
             indicatorsList.add(ind.build());
-            //seqId batch
-            //batchSeqId.get(cnt)
+
 
         } );
         //invio questi risultati
         //qui ho risultati del batch i-esimo -> ho list<Indicator> del batch i-esimo
-
-
-        //System.out.println("indicatorsList: "+indicatorsList);
 
 
         return indicatorsList;
@@ -405,7 +362,6 @@ public class Producer {
     }
 
     public static List<Timestamp> createTimestampsList(String str){
-        //String str = "[2021-11-08 08:10:00.0]";
 
         List<Timestamp> list = new ArrayList<>();
         String[] line = str.split(",");
@@ -454,11 +410,6 @@ public class Producer {
                 //se li ha, allora li metto uno a uno nel setTs
                 for(Timestamp ts: res.getBuys()){  //set buys (at maximum, they're 3)
                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
-                     /*
-                     if (res.getSymbol().equals("IEBBB.FR")){
-                         System.out.println("timestamp= "+new Timestamp(timestamp.getSeconds()));
-                     }
-                      */
                     cross.setTs(timestamp);
                 }
             }
@@ -495,17 +446,37 @@ public class Producer {
         try {
             Date parsedDate = dateFormat.parse(strDate);
             Timestamp timestamp = new Timestamp(parsedDate.getTime());
-            /*
-            System.out.println("parsedDate.getTime() = "+parsedDate.getTime());
-            System.out.println("parsedDate = "+parsedDate);
-            System.out.println("strDate = "+strDate);
-             */
             return timestamp;
         } catch(Exception e) {
             //error
             return null;
         }
 
+    }
+
+
+    public static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> getIntermediateResults() {
+        return intermediateResults;
+    }
+
+    public static void setIntermediateResults(Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults) {
+        Producer.intermediateResults = intermediateResults;
+    }
+
+    public static Timestamp getFinalWindowLongBatch() {
+        return finalWindowLongBatch;
+    }
+
+    public static void setFinalWindowLongBatch(Timestamp finalWindowLongBatch) {
+        Producer.finalWindowLongBatch = finalWindowLongBatch;
+    }
+
+    public static Map<Integer,List<Result>> getFinalResults() {
+        return finalResults;
+    }
+
+    public static void setFinalResults(Map<Integer,List<Result>> finalResults) {
+        Producer.finalResults = finalResults;
     }
 
 }

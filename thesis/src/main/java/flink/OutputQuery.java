@@ -1,16 +1,16 @@
-package flink.query1;
+package flink;
 
 import scala.Tuple2;
 
 import java.util.List;
 import java.util.Map;
 
-public class OutputQ1 {
+public class OutputQuery {
 
     private Map<String, Float> lastPricePerSymbol;
     private Map<String, List<Integer>> symbolInBatches;
 
-    public OutputQ1(Map<String, Float> price, Map<String, List<Integer>> batches) {
+    public OutputQuery(Map<String, Float> price, Map<String, List<Integer>> batches) {
         this.lastPricePerSymbol = price;
         this.symbolInBatches = batches;
 
@@ -23,7 +23,6 @@ public class OutputQ1 {
 
         int i=2;
 
-        //System.out.println("currWindowCount: "+currWindowCount);
         if (currWindowCount>0){
             if (myEma38.containsKey(new Tuple2<>(s, currWindowCount-1))){
                 lastEma = myEma38.get(new Tuple2<>(s, currWindowCount-1));

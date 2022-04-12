@@ -1,7 +1,7 @@
 package kafka;
 
-import flink.query1.MapFunctionEvent;
-import flink.query1.Query1;
+import flink.MapFunctionEvent;
+import flink.Queries;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -29,7 +29,6 @@ public class Consumer {
     public static void setStartTime(long startTime) {
         Consumer.startTime = startTime;
     }
-
 
     public static FlinkKafkaConsumer<String> createConsumer() throws Exception {
         //properties creation
@@ -67,7 +66,7 @@ public class Consumer {
         DataStream<Event> stream = env.addSource(consumer)
                 .map(new MapFunctionEvent());
 
-        Query1.runQuery1(stream);
+        Queries.runQuery1(stream);
         env.execute("debsTest");
 
     }
