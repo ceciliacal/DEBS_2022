@@ -15,7 +15,7 @@ repositories {
 
 
 application {
-    mainClass.set("de.tum.i13.Main")
+    mainClass.set("kafka.Producer")
 }
 
 protobuf {
@@ -51,7 +51,7 @@ jar {
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 
     manifest {
-        attributes "Main-Class": "de.tum.i13.Main"
+        attributes "Main-Class": "kafka.Producer"
     }
 
     from {
@@ -63,6 +63,10 @@ tasks.processResources {
     duplicatesStrategy = 'include'
 }
 
+task(consumer, dependsOn: 'classes', type: JavaExec) {
+    main = 'kafka.Consumer'
+    classpath = sourceSets.main.runtimeClasspath
+}
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
