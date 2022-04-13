@@ -1,5 +1,6 @@
 package kafka;
 
+import de.tum.i13.challenge.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -8,7 +9,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import scala.Tuple2;
-import subscription.challenge.*;
 import utils.Config;
 
 import java.io.DataInputStream;

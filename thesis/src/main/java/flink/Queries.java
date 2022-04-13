@@ -18,7 +18,7 @@ import java.util.Date;
 
 public class Queries {
 
-    public static void runQuery1(DataStream<Event> stream){
+    public static void runQueries(DataStream<Event> stream){
 
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(Event::getSymbol);

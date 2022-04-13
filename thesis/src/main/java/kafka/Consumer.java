@@ -22,12 +22,21 @@ public class Consumer {
 
     private static long startTime;
 
-    public static long getStartTime() {
-        return startTime;
-    }
+    //creating kafka consumer to listen for data in kafka broker
+    public static void main(String[] args) throws Exception {
 
-    public static void setStartTime(long startTime) {
-        Consumer.startTime = startTime;
+        FlinkKafkaConsumer<String> consumer = createConsumer();
+        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(1)));
+        StreamExecutionEnvironment env = createEnviroment();
+
+        //mapping data from source into datastream of Events
+        DataStream<Event> stream = env.addSource(consumer)
+                .map(new MapFunctionEvent());
+
+        //start queries calculation
+        Queries.runQueries(stream);
+        env.execute("debsTest");
+
     }
 
     public static FlinkKafkaConsumer<String> createConsumer() throws Exception {
@@ -42,13 +51,13 @@ public class Consumer {
         //consumer creation
         FlinkKafkaConsumer<String> myConsumer = new FlinkKafkaConsumer<>(Config.TOPIC1, new SimpleStringSchema(), props);
 
-        System.out.println("---creato consumer--");
+        System.out.println("---consumer created---");
         return myConsumer;
 
     }
 
     public static StreamExecutionEnvironment createEnviroment(){
-        System.out.println("--sto in create env--");
+        System.out.println("--enviroment created---");
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -57,18 +66,12 @@ public class Consumer {
     }
 
 
-    public static void main(String[] args) throws Exception {
+    public static long getStartTime() {
+        return startTime;
+    }
 
-        FlinkKafkaConsumer<String> consumer = createConsumer();
-        consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(1)));
-        StreamExecutionEnvironment env = createEnviroment();
-
-        DataStream<Event> stream = env.addSource(consumer)
-                .map(new MapFunctionEvent());
-
-        Queries.runQuery1(stream);
-        env.execute("debsTest");
-
+    public static void setStartTime(long startTime) {
+        Consumer.startTime = startTime;
     }
 
 
