@@ -1,3 +1,0 @@
-Event{symbol='IEBBB.FR', batch=1, secType='I', timestamp=2021-11-08 07:09:00.0, strTimestamp='2021-11-08 07:09:00.0', lastTradePrice=52.69, ema38=0.0, ema100=0.0, lastBatchTimestamp=2021-11-08 08:15:00.0}
-Event{symbol='IEBBB.FR', batch=1, secType='I', timestamp=2021-11-08 07:15:20.0, strTimestamp='2021-11-08 07:15:20.0', lastTradePrice=52.66, ema38=0.0, ema100=0.0, lastBatchTimestamp=2021-11-08 08:15:00.0}
-Event{symbol='IEBBB.FR', batch=1, secType='I', timestamp=2021-11-08 08:00:00.0, strTimestamp='2021-11-08 08:00:00.0', lastTradePrice=52.69, ema38=0.0, ema100=0.0, lastBatchTimestamp=2021-11-08 08:15:00.0}
