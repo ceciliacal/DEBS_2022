@@ -11,7 +11,8 @@ This project is my solution for Grand Challenge DEBS 2022. My group ID is 16.
 There are two main applications inside one single Gradle project. 
 
 To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead created to listen to the Kafka broker's topic the producer sends data to, and to process those data with the stream processing framework Apache Flink. 
-Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API using ip "localhost" and port "6667". Results are eventually sent from the producer application to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
+Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API. Ip is set to "localhost" but port must be passed as argument - e.g.: "6667" (see below). 
+Results are eventually sent from the producer application to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
 
 Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
 	
@@ -36,9 +37,11 @@ $ sudo docker-compose up
 ```
 At this point you can get back to the root folder "thesis" and need to open two new separated terminal shells to run separately the two applications. Then type the next command in the former, and the last command in the latter: 
 ```
-$ gradle consumer
-$ gradle run
+$ gradle consumer --args='#port'
+$ gradle run --args='#port'
 ```
+Port number must be identical in both cases, for example --args='6668' (or whatever available port on your machine). 
+
 So, in order to launch the application properly, you HAVE TO to run the docker-compose file first, then run consumer application inside a shell (using command "gradle consumer") and only eventually run the producer in a new separated shell (command "gradle run"). 
 
 To stop the docker container, you can type:
