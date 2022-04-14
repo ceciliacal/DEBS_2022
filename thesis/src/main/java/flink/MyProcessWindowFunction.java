@@ -14,7 +14,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
     private Map<String, Integer> count;  //counts number of current window per symbol
     private Map<Tuple2<String,Integer>,Float> myEma38;   //K: <symbol,countWindow> - V: ema
     private Map<Tuple2<String,Integer>,Float> myEma100;
-    private Map<String, List<Timestamp>> buyCrossovers;
+    private Map<String, List<Timestamp>> buyCrossovers;  //K: <symbol> - V: List of timestamps
     private Map<String, List<Timestamp>> sellCrossovers;
 
 
@@ -28,8 +28,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
         Timestamp windowEndTs = new Timestamp(context.window().getEnd());
         OutputQuery res = elements.iterator().next();
 
-        Map<String, Float> lastPricePerSymbol = res.getLastPricePerSymbol();
-        Map<String, List<Integer>> symbolInBatches = res.getSymbolInBatches();
+        Map<String, Float> lastPricePerSymbol = res.getLastPricePerSymbol();    //last price of current symbol (string s = symbol) cause it's keyed stream
+        Map<String, List<Integer>> symbolInBatches = res.getSymbolInBatches();  //list of #batch containing current symbol
 
         if (count==null){
             count = new HashMap<>();
@@ -43,7 +43,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             }
         }
 
-
+        //========== QUERY1 ============
         if (myEma38==null){
             myEma38 = new HashMap<>();
             myEma38.put(new Tuple2<>(s,count.get(s)),null);
@@ -58,6 +58,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
         //calculating ema100
         OutputQuery.calculateEMA(s, lastPricePerSymbol.get(s), count.get(s), Config.ema100, myEma100);
 
+        //========== END OF QUERY1 ============
 
 
         //========== QUERY2 ============
@@ -68,14 +69,14 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             sellCrossovers = new HashMap<>();
         }
 
-
+        //calculating crossovers
         if (count.get(s)>0){
             if (myEma38.containsKey(new Tuple2<>(s,count.get(s)-1)) && myEma100.containsKey(new Tuple2<>(s,count.get(s)-1))){
 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) > myEma100.get(new Tuple2<>(s,count.get(s)))) {
                     if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) <= myEma100.get(new Tuple2<>(s,count.get(s)-1))){
                         //buy
-                        System.out.println("BUY!! "+s);
+                        System.out.println("BUY! "+s);
                         if (!buyCrossovers.containsKey(s)){
                             List<Timestamp> ts = new ArrayList<>();
                             ts.add(windowEndTs);
@@ -92,7 +93,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) < myEma100.get(new Tuple2<>(s,count.get(s)))){
                     if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) >= myEma100.get(new Tuple2<>(s,count.get(s)-1))) {
                         //sell
-                        System.out.println("SELL!! "+s);
+                        System.out.println("SELL! "+s);
                         if (!sellCrossovers.containsKey(s)){
                             List<Timestamp> ts = new ArrayList<>();
                             ts.add(windowEndTs);
@@ -112,12 +113,14 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
 
         //========== END QUERY2 ============
 
+        //========== retrieving results per window ==========
         Map<String, Tuple2<Integer,Float>> symbol_WindowEma38 = new HashMap<>();
         Map<String, Tuple2<Integer,Float>> symbol_WindowEma100 = new HashMap<>();
 
         symbol_WindowEma38.put(s, new Tuple2<>(count.get(s),myEma38.get(new Tuple2<>(s,count.get(s)))));
         symbol_WindowEma100.put(s, new Tuple2<>(count.get(s),myEma100.get(new Tuple2<>(s,count.get(s)))));
 
+        //getting last three ts for buys and sells lists
         List<Timestamp> lastThreeBuys = null;
         if (buyCrossovers.get(s)!=null){
             int sizeBuy = buyCrossovers.get(s).size();
@@ -163,6 +166,8 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             FinalOutput finalOutput = new FinalOutput(s, batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
             out.collect(finalOutput);
         });
+
+        //========== end of retrieving results per window ==========
 
     }
 

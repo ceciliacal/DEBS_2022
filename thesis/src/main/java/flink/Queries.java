@@ -18,7 +18,7 @@ import java.util.Date;
 
 public class Queries {
 
-    public static void runQueries(DataStream<Event> stream){
+    public static void runQueries(DataStream<Event> stream, int port){
 
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(Event::getSymbol);
@@ -32,7 +32,7 @@ public class Queries {
                     @Override
                     public void process(ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>.Context context, Iterable<FinalOutput> elements, Collector<FinalOutput> out) throws Exception {
 
-                        System.out.println("in processALL: "+new Date(context.window().getStart()));
+                        System.out.println("Firing window: "+new Date(context.window().getStart()));
                         int i = 0;
                         FinalOutput res = elements.iterator().next();  //first element in iterator
 
@@ -66,7 +66,8 @@ public class Queries {
                             i++;
                         }
 
-                        Socket s = new Socket("localhost",6668);
+                        //sending results to producer application server via socketAPI
+                        Socket s = new Socket("localhost",port);
                         DataOutputStream dout = new DataOutputStream(s.getOutputStream());
                         dout.writeBytes(stringToSend);
                         dout.flush();
@@ -77,7 +78,7 @@ public class Queries {
 
                     }
                 })
-                .print()
+                .print()    //sink -> prints first record out of the entire FinalOutput collection
                 ;
 
     }

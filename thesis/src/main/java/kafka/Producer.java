@@ -1,5 +1,6 @@
 package kafka;
 
+//import de.tum.i13.challenge.*;
 import de.tum.i13.challenge.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -30,9 +30,8 @@ public class Producer {
     private static Timestamp finalWindowLongBatch = null ;
     private static Map<Integer,List<Result>> finalResults;
 
-    /*
-    creates kafka producer
-     */
+
+    //creates kafka producer
     public static org.apache.kafka.clients.producer.Producer<String, String> createProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, Config.KAFKA_BROKERS);
@@ -42,9 +41,8 @@ public class Producer {
         return new KafkaProducer<>(props);
     }
 
-    /*
-    kafka producer streams messages to kafka topic reading csv file
-     */
+
+    //kafka producer streams messages to kafka topic reading csv file
     public static void main(String[] args) throws Exception {
 
         final org.apache.kafka.clients.producer.Producer<String, String> producer = createProducer();
@@ -52,6 +50,9 @@ public class Producer {
         intermediateResults = new HashMap<>();
         finalResults = new HashMap<>();
         int longBatch = -1;
+
+        int port = Integer.parseInt(args[0]);
+        System.out.println("in PRODUCER: port is "+port);
 
         //============================ starts MAIN gRPC ============================
 
@@ -118,8 +119,6 @@ public class Producer {
             //==== end of windows setup =====
 
 
-            //=========== send data ===========
-
             String[][] value = {new String[6]};
             final String[] valueToSend = new String[1];
 
@@ -132,12 +131,11 @@ public class Producer {
             System.out.println("lastTsBatch = "+lastTsBatch);
 
             if (lastTsSeconds - startTsSeconds > TimeUnit.MINUTES.toSeconds(windowLen)){
-                System.out.println("ts sta in piu finestre");
                 longBatch=cnt;
                 setFinalWindowLongBatch(windowProducingResult(lastTsBatch,nextWindow));
-
+                System.out.println("batch "+longBatch+" size is bigger than just one window.");
+                System.out.println("finalWindowLongBatch = "+ finalWindowLongBatch);
             }
-            System.out.println("finalWindowLongBatch = "+ finalWindowLongBatch);
 
 
             for (i=0;i<num;i++){
@@ -145,6 +143,8 @@ public class Producer {
                 currSeconds = batch.getEvents(i).getLastTrade().getSeconds();
                 Timestamp currentTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
                 assert currentTimestamp != null;
+
+                //=========== send data ===========
 
                 value[0][0] = batch.getEvents(i).getSymbol();
                 value[0][1] = String.valueOf(batch.getEvents(i).getSecurityType());
@@ -154,7 +154,7 @@ public class Producer {
                 value[0][5] = String.valueOf(i);       //event number inside of current batch
                 valueToSend[0] = String.join(",", value[0]);
 
-                ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC1, 0, currentTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
+                ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC, 0, currentTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
 
                 producer.send(producerRecord, (metadata, exception) -> {
                     if(metadata != null){
@@ -167,17 +167,21 @@ public class Producer {
                     }
                 });
 
+                //=========== end of send data ===========
 
+
+                //=========== receive results ===========
                 if (currentTimestamp.compareTo(nextWindow)>0){
 
-                    ServerSocket ss = new ServerSocket(6668);
+                    ServerSocket ss = new ServerSocket(port);
                     Timestamp prev = nextWindow;
                     nextWindow = windowProducingResult(currentTimestamp, nextWindow);
 
-                    System.out.println("NELL IF ");
+                    System.out.println("Window has fired. Receiving data and updating new window's timestamp...");
                     System.out.println("currentTimestamp: "+currentTimestamp);
                     System.out.println("nextWindow: "+nextWindow);
 
+                    //get results through socket. we get one string per window containing the results of all batches falling in that window
                     Socket s = ss.accept();
 
                     DataInputStream dis = new DataInputStream(s.getInputStream());
@@ -189,16 +193,15 @@ public class Producer {
 
 
                     if(finalWindowLongBatch!=null){
-                        //ci entro solo quando il batch sta in piu finestre ->
-
+                        //in here only when batch size is longer than 5 mins
                         if (finalWindowLongBatch.compareTo(prev)>0){
-                            System.out.println("NON HO FINITO "+cnt);
+                            System.out.println("Long batch "+cnt+" isn't over yet.");
                             putIntoMap(str, longBatch);
                         }
                         //System.out.println("intermediateResults = "+intermediateResults);
 
                         if (currentTimestamp.compareTo(finalWindowLongBatch)>0){
-                            System.out.println("HO FINITO!!");
+                            System.out.println("Long batch "+cnt+" is over.");
                             putIntoMap(str,longBatch);    //che hanno batch 0 !!!!!!!!
                             //System.out.println("intermediateResults finito= "+intermediateResults);
                         }
@@ -209,9 +212,8 @@ public class Producer {
 
                         for(i=0;i<batchesInCurrentWindow.size();i++) {
                             //sending query1 results
-                            //System.out.println("prima calcIndic - i: "+i);
+
                             List<Indicator> indicatorsList = calculateIndicators(batchesInCurrentWindow.get(i));
-                            //System.out.println("indicatorsList = "+indicatorsList);
                             System.out.println("batchesInCurrentWindow.get(i) = "+batchesInCurrentWindow.get(i));
                             ResultQ1 q1Result = ResultQ1.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
@@ -222,7 +224,6 @@ public class Producer {
 
                             //sending query2 results
                             List<CrossoverEvent> crossoverEventList = calculateCrossoverEvents(batchesInCurrentWindow.get(i));
-
                             ResultQ2 q2Result = ResultQ2.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
                                     .setBatchSeqId(batchSeqId.get(batchesInCurrentWindow.get(i))) //set the sequence number
@@ -231,27 +232,23 @@ public class Producer {
 
                             challengeClient.resultQ2(q2Result);
 
-
-                            //System.out.println("---fineITERAZ---");
                         }
 
                     }
 
                 }
 
-            }
+                //=========== end of receive results ===========
 
-            //=========== end of send data ===========
+            }
 
             System.out.println("Processed batch #" + cnt);
             ++cnt;
-
 
             //todo: prima era 100
             if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
-
 
         }
 
@@ -261,29 +258,30 @@ public class Producer {
 
     }
 
-    public static void putIntoMap(String str, int batchGrande) {
+    //putting results from batch longer than one window inside of "intermediateResults" map to collect them later on
+    public static void putIntoMap(String str, int longBatch) {
 
         String[] lines = str.split("\n");
         for (String line : lines) {
             String[] values = line.split(";");
-            if (Integer.valueOf(values[1])==batchGrande){
+            if (Integer.valueOf(values[1])==longBatch){
                 intermediateResults.put(new Tuple2<>(Integer.valueOf(values[1]),values[2]), new Tuple2<>(Float.valueOf(values[3]),Float.valueOf(values[4])));
             }
         }
     }
 
-    //serve a popolare mappa finalResults
+    //populates finalResults map
     public static List<Integer> calculateResults(String str, int longBatch) throws IOException, InterruptedException {
-        System.out.println("STO IN CALCULATERES!!");
+        System.out.println("Collecting results!");
         Result res;
         List<Integer> batchesInCurrentWindow = new ArrayList<>();
         List<Timestamp> buysTs = null;
         List<Timestamp> sellsTs = null;
-        finalResults = new HashMap<>();     //per ogni finestra lo riazzero
+        finalResults = new HashMap<>();     //every window has a new map
 
-        String[] lines = str.split("\n");
+        String[] lines = str.split("\n");       //splitting the whole string (contains ALL results, separated from "\n")
         for (String line : lines) {
-            String[] values = line.split(";");
+            String[] values = line.split(";");  //splitting each field in one single line
 
             int currBatch = Integer.valueOf(values[1]);
             if (!batchesInCurrentWindow.contains(currBatch)){
@@ -291,17 +289,18 @@ public class Producer {
             }
             //System.out.println("currBatch= "+currBatch);
 
+            //retrieving crossovers ts lists (if any)
             if (!values[5].equals("null")) {
-                //parse lista ts
+                //parse ts list
                 buysTs = createTimestampsList(values[5]);
             }
             else if(!values[6].equals("null")){
                 sellsTs = createTimestampsList(values[6]);
             }
 
-            if(currBatch==longBatch) {  //se il batch della riga che sto analizzando coincide con longBatch
-                //prendo dalla mappa intermediate la key <longBatch,simboloCorrente> e aggiungo i relativi ema alla lista di Result per popolare finalResults
-                //System.out.println("sto in: currBatch==longBatch");
+            //if current line's batch equals longBatch get from intermediateResults map
+            //the key <longBatch,currentSymbol> ad add its emas values to a Result object list in order to populate finalResults map.
+            if(currBatch==longBatch) {
                 Tuple2<Float, Float> emas = intermediateResults.get(new Tuple2<>(longBatch, values[2]));
                 res = new Result(values[2], emas._1, emas._2, null, null);
             } else {
@@ -319,26 +318,24 @@ public class Producer {
                 List<Result> resList = new ArrayList<>();
                 resList.add(res);
                 finalResults.put(currBatch,resList);
-                //System.out.println("NOT");
+                //System.out.println("NO");
             } else {
                 List<Result> resList = finalResults.get(currBatch);
                 resList.add(res);
                 finalResults.put(currBatch,resList);
                 //System.out.println("YES");
             }
-            //ho analizzato singola linea
+            //finish analyzing single line
             buysTs = null;
             sellsTs = null;
-        } //ho analizzato tutte le linee
+        } //finish analyzing all lines
 
         //System.out.println("finalResults = "+finalResults);
-
         return batchesInCurrentWindow;
     }
 
-    public static List<Indicator> calculateIndicators(int i) throws IOException, InterruptedException {
+    public static List<Indicator> calculateIndicators(int i) {
 
-        //System.out.println("STO IN CALCULATE INDICATORS!!!!!!!!!!! + i="+i);
         List<Indicator> indicatorsList = new ArrayList<>();
         List<Result> resList = finalResults.get(i);
 
@@ -353,9 +350,8 @@ public class Producer {
 
 
         } );
-        //invio questi risultati
-        //qui ho risultati del batch i-esimo -> ho list<Indicator> del batch i-esimo
 
+        //here we get list<Indicator> of #i batch
 
         return indicatorsList;
 
@@ -385,6 +381,7 @@ public class Producer {
         return list;
     }
 
+    //given timestamp lastTs, this method calculates upper bound window (every 5 mins)
     public static Timestamp windowProducingResult(Timestamp lastTs,Timestamp nextWindow){
         long res = nextWindow.getTime();
         while(true){
@@ -406,8 +403,9 @@ public class Producer {
         resList.stream().forEach(res -> {
             CrossoverEvent.Builder cross = CrossoverEvent.newBuilder();
             cross.setSymbol(res.getSymbol());
-            if (res.getBuys()!=null){  //se quel simbolo non ha crossover (lista è null)
-                //se li ha, allora li metto uno a uno nel setTs
+            if (res.getBuys()!=null){  //if list is null that symbol has no crossovers
+                //if it does, we put each one of them inside CrossoverEvent through setTs
+
                 for(Timestamp ts: res.getBuys()){  //set buys (at maximum, they're 3)
                     com.google.protobuf.Timestamp timestamp = com.google.protobuf.Timestamp.newBuilder().setSeconds(ts.getTime()).build();
                     cross.setTs(timestamp);

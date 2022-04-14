@@ -25,6 +25,10 @@ public class Consumer {
     //creating kafka consumer to listen for data in kafka broker
     public static void main(String[] args) throws Exception {
 
+        int port = Integer.parseInt(args[0]);
+        System.out.println("in CONSUMER: port= "+port);
+
+
         FlinkKafkaConsumer<String> consumer = createConsumer();
         consumer.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMillis(1)));
         StreamExecutionEnvironment env = createEnviroment();
@@ -34,7 +38,7 @@ public class Consumer {
                 .map(new MapFunctionEvent());
 
         //start queries calculation
-        Queries.runQueries(stream);
+        Queries.runQueries(stream,port);
         env.execute("debsTest");
 
     }
@@ -49,7 +53,7 @@ public class Consumer {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
         //consumer creation
-        FlinkKafkaConsumer<String> myConsumer = new FlinkKafkaConsumer<>(Config.TOPIC1, new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> myConsumer = new FlinkKafkaConsumer<>(Config.TOPIC, new SimpleStringSchema(), props);
 
         System.out.println("---consumer created---");
         return myConsumer;
@@ -65,7 +69,6 @@ public class Consumer {
         return env;
     }
 
-
     public static long getStartTime() {
         return startTime;
     }
@@ -73,8 +76,5 @@ public class Consumer {
     public static void setStartTime(long startTime) {
         Consumer.startTime = startTime;
     }
-
-
-
 
 }
