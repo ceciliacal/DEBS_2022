@@ -33,9 +33,8 @@ Solution can be installed locally using:
 $ git clone "this repo's url"
 $ cd docker/
 $ sudo docker-compose up
-$ cd ..
 ```
-At this point you need to open two separated terminal shells to run separately the two applications. So type the next command in the former, and the last command in the latter: 
+At this point you can get back to the root folder "thesis" and need to open two new separated terminal shells to run separately the two applications. Then type the next command in the former, and the last command in the latter: 
 ```
 $ gradle consumer
 $ gradle run
