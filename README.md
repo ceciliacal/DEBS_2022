@@ -21,10 +21,10 @@ So it's necessary to execute "gradle consumer" FIRST and "gradle run" later in t
 ## General info
 This project is my solution for Grand Challenge DEBS 2022. My group ID is 16. 
 
-There are two main applications inside one single Gradle project.
-To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer (kafka.Consumer) application was instead created to listen to the Kafka broker's topic the producer sends data to, and it consumes received data with the stream processing framework Apache Flink. 
-Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API using ip "localhost" and port "6667". 
-Kafka and Zookeeper runs on Docker containers. 
+There are two main applications inside one single Gradle project. 
+To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer (kafka.Consumer) application was instead created to listen to the Kafka broker's topic the producer sends data to, and it processes received data with the stream processing framework Apache Flink. 
+Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API using ip "localhost" and port "6667". Results are eventually sent to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
+Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and be built and launched using Gradle. 
 	
 ## Technologies
 Project is created with:
@@ -37,7 +37,7 @@ Project is created with:
 * Apache Flink 
 	
 ## Setup
-To run this project, install it locally using npm:
+To run this project, install it locally using:
 
 ```
 $ cd ../lorem
