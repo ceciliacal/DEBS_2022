@@ -1,4 +1,5 @@
 # DEBS_2022
+This project is my solution for Grand Challenge DEBS 2022. My group ID is 16. 
 
 ## Table of contents
 * [General info](#general-info)
@@ -6,7 +7,6 @@
 * [Setup](#setup)
 
 ## General info
-This project is my solution for Grand Challenge DEBS 2022. My group ID is 16. 
 
 There are two main applications inside one single Gradle project. 
 
@@ -34,7 +34,9 @@ $ git clone "this repo's url"
 $ cd docker/
 $ sudo docker-compose up
 $ cd ..
+```
 At this point you need to open two separated terminal shells to run separately the two applications. So type the next command in the former, and the last command in the latter: 
+```
 $ gradle consumer
 $ gradle run
 ```
