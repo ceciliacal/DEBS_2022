@@ -40,3 +40,9 @@ $ gradle consumer
 $ gradle run
 ```
 So, in order to launch the application properly, you HAVE TO to run the docker-compose file first, then run consumer application inside a shell (using command "gradle consumer") and only eventually run the producer in a new separated shell (command "gradle run"). 
+
+To stop the docker container, you can type:
+```
+$ cd docker/
+$ sudo ./stop.sh
+```
