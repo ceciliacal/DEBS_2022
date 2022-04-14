@@ -1,18 +1,5 @@
 # DEBS_2022
 
-To run the solution, you need to have installed on your machine:
--Java
--Docker
--Docker compose
--Gradle
-
-And follow the next steps:
--> go into docker folder and execute: sudo docker-compose up
--> in thesis folder, open a terminal and execute: gradle consumer
--> after running gradle consumer, open another terminal and execute: gradle run 
-
-So it's necessary to execute "gradle consumer" FIRST and "gradle run" later in two separated shells.
-
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
@@ -22,9 +9,11 @@ So it's necessary to execute "gradle consumer" FIRST and "gradle run" later in t
 This project is my solution for Grand Challenge DEBS 2022. My group ID is 16. 
 
 There are two main applications inside one single Gradle project. 
-To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer (kafka.Consumer) application was instead created to listen to the Kafka broker's topic the producer sends data to, and it processes received data with the stream processing framework Apache Flink. 
-Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API using ip "localhost" and port "6667". Results are eventually sent to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
-Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and be built and launched using Gradle. 
+
+To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead created to listen to the Kafka broker's topic the producer sends data to, and to process those data with the stream processing framework Apache Flink. 
+Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API using ip "localhost" and port "6667". Results are eventually sent from the producer application to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
+
+Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
 	
 ## Technologies
 Project is created with:
@@ -37,10 +26,16 @@ Project is created with:
 * Apache Flink 
 	
 ## Setup
-To run this project, install it locally using:
+To run this project, you need to previously install Java and Gradle on your machine. 
+Solution can be installed locally using:
 
 ```
-$ cd ../lorem
-$ npm install
-$ npm start
+$ git clone "this repo's url"
+$ cd docker/
+$ sudo docker-compose up
+$ cd ..
+At this point you need to open two separated terminal shells to run separately the two applications. So type the next command in the former, and the last command in the latter: 
+$ gradle consumer
+$ gradle run
 ```
+So, in order to launch the application properly, you HAVE TO to run the docker-compose file first, then run consumer application inside a shell (using command "gradle consumer") and only eventually run the producer in a new separated shell (command "gradle run"). 
