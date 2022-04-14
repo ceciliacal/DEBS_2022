@@ -170,7 +170,7 @@ public class Producer {
 
                 if (currentTimestamp.compareTo(nextWindow)>0){
 
-                    ServerSocket ss = new ServerSocket(6667);
+                    ServerSocket ss = new ServerSocket(6668);
                     Timestamp prev = nextWindow;
                     nextWindow = windowProducingResult(currentTimestamp, nextWindow);
 
@@ -248,7 +248,7 @@ public class Producer {
 
 
             //todo: prima era 100
-            if(cnt > 100) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
+            if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
 

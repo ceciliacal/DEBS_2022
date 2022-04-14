@@ -32,7 +32,7 @@ public class Queries {
                     @Override
                     public void process(ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>.Context context, Iterable<FinalOutput> elements, Collector<FinalOutput> out) throws Exception {
 
-                        System.out.println("in processALL "+new Date(System.currentTimeMillis()));
+                        System.out.println("in processALL: "+new Date(context.window().getStart()));
                         int i = 0;
                         FinalOutput res = elements.iterator().next();  //first element in iterator
 
@@ -62,11 +62,11 @@ public class Queries {
 
                             }
 
-                            System.out.println(new Date(context.window().getStart()) + " " + element);
+                            //System.out.println(new Date(context.window().getStart()) + " " + element);
                             i++;
                         }
 
-                        Socket s = new Socket("localhost",6667);
+                        Socket s = new Socket("localhost",6668);
                         DataOutputStream dout = new DataOutputStream(s.getOutputStream());
                         dout.writeBytes(stringToSend);
                         dout.flush();
