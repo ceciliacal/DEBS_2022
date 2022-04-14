@@ -11,7 +11,7 @@ This project is my solution for Grand Challenge DEBS 2022. My group ID is 16.
 There are two main applications inside one single Gradle project. 
 
 To send data batches to my solution, it was used a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead created to listen to the Kafka broker's topic the producer sends data to, and to process those data with the stream processing framework Apache Flink. 
-Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API. Ip is set to "localhost" but port must be passed as argument - e.g.: "6667" (see below). 
+Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API. Ip is set to "localhost" but port must be passed as argument - e.g.: "6668" (see below). 
 Results are eventually sent from the producer application to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
 
 Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
