@@ -11,7 +11,7 @@ This project is the solution proposed for the DEBS 2022 Grand Challenge by the g
 There are two main applications inside one single Gradle project. 
 
 To send data batches to our solution, it was created a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead realized to listen to the Kafka broker's topic the producer sends data to, and to process those data with the open-source, data stream processing framework Apache Flink. 
-Each time the 5-minute long tumbling window fires its results, it sends them back to the producer application through a Socket API. IP address is set to "localhost" but port must be passed as argument - e.g.: "6668" (see below "Setup"). 
+Each time the 5-minute long tumbling window fires its results, it sends them back to the producer application through a Socket API. IP address is set to "localhost" (of the current machine the solution is running on e.g. a vm) but port must be passed as argument - e.g.: "6668" (see below "Setup"). 
 
 Results are eventually sent from the producer application to the evaluation platform through gRPC API  provided by the Grand Challenge chairs. 
 
