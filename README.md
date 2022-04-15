@@ -1,5 +1,5 @@
 # DEBS_2022
-This project is my solution for Grand Challenge DEBS 2022. My group ID is: group-16. 
+This project is the solution proposed for the DEBS 2022 Grand Challenge by the group having ID group-16.
 
 ## Table of contents
 * [General info](#general-info)
@@ -10,15 +10,15 @@ This project is my solution for Grand Challenge DEBS 2022. My group ID is: group
 
 There are two main applications inside one single Gradle project. 
 
-To send data batches to my solution, it was created a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead created to listen to the Kafka broker's topic the producer sends data to, and to process those data with the stream processing framework Apache Flink. 
-Once one 5 minutes window fires its results, it sends them back to the producer application through a Socket API. IP address is set to "localhost" but port must be passed as argument - e.g.: "6668" (see below is "Setup"). 
+To send data batches to our solution, it was created a Kafka producer application (class "kakfa.Producer"). A kafka consumer ("kafka.Consumer") application was instead realized to listen to the Kafka broker's topic the producer sends data to, and to process those data with the open-source, data stream processing framework Apache Flink. 
+Each time the 5-minute long tumbling window fires its results, it sends them back to the producer application through a Socket API. IP address is set to "localhost" but port must be passed as argument - e.g.: "6668" (see below "Setup"). 
 
-Results are eventually sent from the producer application to the evaluation platform through gRPC API provided by Grand Challenge DEBS. 
+Results are eventually sent from the producer application to the evaluation platform through gRPC API  provided by the Grand Challenge chairs. 
 
-Kafka and Zookeeper runs on Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
+Kafka and Zookeeper run in Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
 	
 ## Technologies
-Project is created with:
+The proposed solution is based on the following frameworks and tools:
 * Java version: openjdk 11.0.14.1
 * Gradle version: 7.4
 * Docker: 20.10.12
