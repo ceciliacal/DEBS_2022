@@ -52,7 +52,6 @@ public class Producer {
         int longBatch = -1;
 
         int port = Integer.parseInt(args[0]);
-        System.out.println("in PRODUCER: port is "+port);
 
         //============================ starts MAIN gRPC ============================
 
@@ -72,8 +71,8 @@ public class Producer {
                 .addQueries(Query.Q1)
                 .addQueries(Query.Q2)
                 .setToken("jkninvezfgvcwexklizimkoonqmudupq") //go to: https://challenge.msrg.in.tum.de/profile/
-                //.setBenchmarkType("evaluation") //Benchmark Type for evaluation
-                .setBenchmarkType("test") //Benchmark Type for testing
+                .setBenchmarkType("evaluation") //Benchmark Type for evaluation
+                //.setBenchmarkType("test") //Benchmark Type for testing
                 .build();
 
         //Create a new Benchmark
@@ -245,10 +244,11 @@ public class Producer {
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
-            //todo: prima era 100
+            /*
             if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
+            */
 
         }
 
