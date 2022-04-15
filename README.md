@@ -37,7 +37,7 @@ $ cd docker/
 $ sudo docker-compose up
 $ cd .. 
 ```
-At this point you are back to the root folder "thesis". Now you need to open two new separate terminal shells to run the two applications in parallel. Type the next command in the former, and the last command in the latter: 
+At this point you are back to the root folder "solution". Now you need to open two new separate terminal shells to run the two applications in parallel. Type the next command in the former, and the last command in the latter: 
 ```
 $ gradle consumer --args='#port'
 $ gradle run --args='#port'
