@@ -1,5 +1,5 @@
 # DEBS_2022
-This project is my solution for Grand Challenge DEBS 2022. My group ID is 16. 
+This project is my solution for Grand Challenge DEBS 2022. My group ID is: group-16. 
 
 ## Table of contents
 * [General info](#general-info)
