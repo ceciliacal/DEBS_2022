@@ -29,16 +29,7 @@ public class Producer {
     private static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults;      //K: #batch+symbol V:ema38+ema100
     private static Timestamp finalWindowLongBatch = null ;
     private static Map<Integer,List<Result>> finalResults;
-    public static Benchmark newBenchmark = null;
 
-
-    public static Benchmark getNewBenchmark() {
-        return newBenchmark;
-    }
-
-    public static void setNewBenchmark(Benchmark newBenchmark) {
-        Producer.newBenchmark = newBenchmark;
-    }
 
     //creates kafka producer
     public static org.apache.kafka.clients.producer.Producer<String, String> createProducer() {
@@ -83,19 +74,29 @@ public class Producer {
                 .addQueries(Query.Q1)
                 .addQueries(Query.Q2)
                 .setToken("jkninvezfgvcwexklizimkoonqmudupq") //go to: https://challenge.msrg.in.tum.de/profile/
-                .setBenchmarkType("evaluation") //Benchmark Type for evaluation
-                //.setBenchmarkType("test") //Benchmark Type for testing
+                //.setBenchmarkType("evaluation") //Benchmark Type for evaluation
+                .setBenchmarkType("test") //Benchmark Type for testing
                 .build();
 
         //Create a new Benchmark
         Benchmark newBenchmark = challengeClient.createNewBenchmark(bc);
+        System.out.println("newBenchmark = "+newBenchmark);
+
+        //todo my kafka consumer
+        KafkaConsumerExample kafkaConsumer = new KafkaConsumerExample(newBenchmark);
+        new Thread(()->{
+            try {
+                kafkaConsumer.runConsumer();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
 
         //Start the benchmark
         challengeClient.startBenchmark(newBenchmark);
-        System.out.println("newBenchmark = "+getNewBenchmark());
 
-        PrintWriter writer = new PrintWriter("/tmp/procTimes.txt", "UTF-8");
-        //PrintWriter writer = new PrintWriter("procTimes.txt", "UTF-8");
+        //PrintWriter writer = new PrintWriter("/tmp/procTimes.txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("procTimes.txt", "UTF-8");
 
         //Process the events
         int cnt = 0;
@@ -197,7 +198,7 @@ public class Producer {
 
                 //=========== end of send data ===========
 
-
+                /*
 
                 //=========== receive results ===========
                 if (currentTimestamp.compareTo(nextWindow)>0){
@@ -280,17 +281,19 @@ public class Producer {
 
 
 
+                 */
+
 
             }
 
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
-/*
+
             if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
- */
+
 
 
 
