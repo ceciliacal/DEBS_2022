@@ -76,7 +76,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) > myEma100.get(new Tuple2<>(s,count.get(s)))) {
                     if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) <= myEma100.get(new Tuple2<>(s,count.get(s)-1))){
                         //buy
-                        System.out.println("BUY! "+s);
+                        //System.out.println("BUY! "+s);
                         if (!buyCrossovers.containsKey(s)){
                             List<Timestamp> ts = new ArrayList<>();
                             ts.add(windowEndTs);
@@ -93,7 +93,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
                 if (myEma38.get(new Tuple2<>(s,count.get(s))) < myEma100.get(new Tuple2<>(s,count.get(s)))){
                     if (myEma38.get(new Tuple2<>(s,count.get(s)-1)) >= myEma100.get(new Tuple2<>(s,count.get(s)-1))) {
                         //sell
-                        System.out.println("SELL! "+s);
+                        //System.out.println("SELL! "+s);
                         if (!sellCrossovers.containsKey(s)){
                             List<Timestamp> ts = new ArrayList<>();
                             ts.add(windowEndTs);
@@ -135,7 +135,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             } else if (sizeBuy==1){
                 lastThreeBuys.add(buyCrossovers.get(s).get(sizeBuy-1));
             }
-            System.out.println(s+" "+windowStartDate+" - lastThreeBuys = "+ lastThreeBuys);
+            //System.out.println(s+" "+windowStartDate+" - lastThreeBuys = "+ lastThreeBuys);
         }
 
         List<Timestamp> lastThreeSells = null;
@@ -152,7 +152,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             } else if (sizeSell==1){
                 lastThreeSells.add(sellCrossovers.get(s).get(sizeSell-1));
             }
-            System.out.println(s+" "+windowStartDate+" - lastThreeSells = "+ lastThreeSells );
+            //System.out.println(s+" "+windowStartDate+" - lastThreeSells = "+ lastThreeSells );
         }
 
         Map<String, List<Timestamp>> symbol_buyCrossovers = new HashMap<>();
@@ -166,6 +166,7 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
             FinalOutput finalOutput = new FinalOutput(s, batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
             out.collect(finalOutput);
         });
+        //System.out.println("proc-time = "+new Timestamp(System.currentTimeMillis()));
 
         //========== end of retrieving results per window ==========
 

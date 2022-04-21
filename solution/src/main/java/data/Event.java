@@ -17,6 +17,7 @@ public class Event {
     Integer     numEvent;
 
 
+
     public Event(String symbol, Integer batch, String secType, String strTimestamp, float lastTradePrice, int numEvent) {
         this.symbol = symbol;
         this.batch = batch;
@@ -97,9 +98,10 @@ public class Event {
         this.timestamp = timestamp;
     }
 
+
     /*
-    Creates Timestamp object from symbol's last received update
-     */
+        Creates Timestamp object from symbol's last received update
+         */
     public static Timestamp createTimestamp(String date, String time) {
 
         String dateTime = date+" "+time;

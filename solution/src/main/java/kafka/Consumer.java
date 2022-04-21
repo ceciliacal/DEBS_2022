@@ -24,9 +24,12 @@ public class Consumer {
 
     //creating kafka consumer to listen for data in kafka broker
     public static void main(String[] args) throws Exception {
-        
+
         int port = Integer.parseInt(args[0]);
+        int parallelism = Integer.parseInt(args[1]);
+        //int port = 6668;
         System.out.println("in CONSUMER: port= "+port);
+        System.out.println("in CONSUMER: parallelism= "+parallelism);
 
 
         FlinkKafkaConsumer<String> consumer = createConsumer();
@@ -35,10 +38,12 @@ public class Consumer {
 
         //mapping data from source into datastream of Events
         DataStream<Event> stream = env.addSource(consumer)
+                .setParallelism(1)
                 .map(new MapFunctionEvent());
 
         //start queries calculation
         Queries.runQueries(stream,port);
+        env.setParallelism(parallelism);
         env.execute("debsTest");
 
     }

@@ -13,6 +13,7 @@ import utils.Config;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +29,16 @@ public class Producer {
     private static Map<Tuple2<Integer, String>, Tuple2<Float, Float>> intermediateResults;      //K: #batch+symbol V:ema38+ema100
     private static Timestamp finalWindowLongBatch = null ;
     private static Map<Integer,List<Result>> finalResults;
+    public static Benchmark newBenchmark = null;
 
+
+    public static Benchmark getNewBenchmark() {
+        return newBenchmark;
+    }
+
+    public static void setNewBenchmark(Benchmark newBenchmark) {
+        Producer.newBenchmark = newBenchmark;
+    }
 
     //creates kafka producer
     public static org.apache.kafka.clients.producer.Producer<String, String> createProducer() {
@@ -50,7 +60,10 @@ public class Producer {
         finalResults = new HashMap<>();
         int longBatch = -1;
 
-        int port = Integer.parseInt(args[0]);
+
+        //int port = Integer.parseInt(args[0]);
+        int port = 6668;
+        //System.out.println("arg = "+args[0]);
 
         //============================ starts MAIN gRPC ============================
 
@@ -79,6 +92,10 @@ public class Producer {
 
         //Start the benchmark
         challengeClient.startBenchmark(newBenchmark);
+        System.out.println("newBenchmark = "+getNewBenchmark());
+
+        PrintWriter writer = new PrintWriter("/tmp/procTimes.txt", "UTF-8");
+        //PrintWriter writer = new PrintWriter("procTimes.txt", "UTF-8");
 
         //Process the events
         int cnt = 0;
@@ -89,6 +106,10 @@ public class Producer {
         Timestamp nextWindow = null;
         long next = 0;
         SimpleDateFormat formatter = new SimpleDateFormat(Config.pattern);
+        int firstSendAfterReceive = 1;
+        long startProcTime = 0;
+        long resultsProcTime;
+        double timeToProcessAWindow;
 
         while(true) {
 
@@ -112,12 +133,12 @@ public class Producer {
                 start = batch.getEvents(0).getLastTrade().getSeconds() * 1000L;
                 next = start + TimeUnit.MINUTES.toMillis(windowLen);
                 nextWindow = new Timestamp(next);
-                System.out.println("nextWindow = "+nextWindow);
+                //System.out.println("nextWindow = "+nextWindow);
             }
             //==== end of windows setup =====
 
 
-            String[][] value = {new String[6]};
+            String[][] value = {new String[7]};
             final String[] valueToSend = new String[1];
 
             long lastTsSeconds = batch.getEvents(num-1).getLastTrade().getSeconds();
@@ -131,8 +152,8 @@ public class Producer {
             if (lastTsSeconds - startTsSeconds > TimeUnit.MINUTES.toSeconds(windowLen)){
                 longBatch=cnt;
                 setFinalWindowLongBatch(windowProducingResult(lastTsBatch,nextWindow));
-                System.out.println("batch "+longBatch+" size is bigger than just one window.");
-                System.out.println("finalWindowLongBatch = "+ finalWindowLongBatch);
+                //System.out.println("batch "+longBatch+" size is bigger than just one window.");
+                //System.out.println("finalWindowLongBatch = "+ finalWindowLongBatch);
             }
 
 
@@ -140,6 +161,8 @@ public class Producer {
 
                 currSeconds = batch.getEvents(i).getLastTrade().getSeconds();
                 Timestamp currentTimestamp = stringToTimestamp(formatter.format(new Date(currSeconds * 1000L)),1);
+                Timestamp procTimestamp = new Timestamp(System.currentTimeMillis());
+                //System.out.println("procTimestamp = "+procTimestamp);
                 assert currentTimestamp != null;
 
                 //=========== send data ===========
@@ -150,10 +173,17 @@ public class Producer {
                 value[0][3] = String.valueOf(batch.getEvents(i).getLastTradePrice());
                 value[0][4] = String.valueOf(cnt);     //batch number
                 value[0][5] = String.valueOf(i);       //event number inside of current batch
+                value[0][6] = String.valueOf(procTimestamp);     //processing ts
                 valueToSend[0] = String.join(",", value[0]);
 
                 ProducerRecord<String,String> producerRecord= new ProducerRecord<>(Config.TOPIC, 0, currentTimestamp.getTime(), String.valueOf(cnt), valueToSend[0]);
 
+                if (firstSendAfterReceive == 1){
+                    startProcTime = System.currentTimeMillis();
+                    //System.out.println("startProcTime = "+new Timestamp(startProcTime)+"   cnt: "+cnt);
+                    //System.out.println("SENDING: ->  key: "+producerRecord.key()+" value: "+ producerRecord.value());
+                    firstSendAfterReceive = 0;
+                }
                 producer.send(producerRecord, (metadata, exception) -> {
                     if(metadata != null){
                         //successful writes
@@ -168,6 +198,7 @@ public class Producer {
                 //=========== end of send data ===========
 
 
+
                 //=========== receive results ===========
                 if (currentTimestamp.compareTo(nextWindow)>0){
 
@@ -175,15 +206,23 @@ public class Producer {
                     Timestamp prev = nextWindow;
                     nextWindow = windowProducingResult(currentTimestamp, nextWindow);
 
-                    System.out.println("Window has fired. Receiving data and updating new window's timestamp...");
-                    System.out.println("currentTimestamp: "+currentTimestamp);
-                    System.out.println("nextWindow: "+nextWindow);
+                    //System.out.println("Window has fired. Receiving data and updating new window's timestamp...");
+                    //System.out.println("currentTimestamp: "+currentTimestamp);
+                    //System.out.println("nextWindow: "+nextWindow);
 
                     //get results through socket. we get one string per window containing the results of all batches falling in that window
                     Socket s = ss.accept();
 
                     DataInputStream dis = new DataInputStream(s.getInputStream());
                     ss.close();
+
+                    //differenza fra tempo in cui ricevo risultato ogni 5 minuti (quanto ci mette a processare una finestra)
+                    // e quando questa finestra è iniziata. Inizia in due casi: o se i=0 e cnt=0, oppure al primo invio dopo la ricezione.
+                    resultsProcTime = System.currentTimeMillis();
+                    //System.out.println("resultsProcTime = "+new Timestamp(resultsProcTime));
+                    timeToProcessAWindow = resultsProcTime - startProcTime;
+                    System.out.println("timeToProcessAWindow = "+ timeToProcessAWindow/1000L);
+                    writer.println(String.valueOf(timeToProcessAWindow/1000L));
 
                     byte[] bytes = dis.readAllBytes();
                     String str = new String(bytes, StandardCharsets.UTF_8);
@@ -193,13 +232,13 @@ public class Producer {
                     if(finalWindowLongBatch!=null){
                         //in here only when batch size is longer than 5 mins
                         if (finalWindowLongBatch.compareTo(prev)>0){
-                            System.out.println("Long batch "+cnt+" isn't over yet.");
+                            //System.out.println("Long batch "+cnt+" isn't over yet.");
                             putIntoMap(str, longBatch);
                         }
                         //System.out.println("intermediateResults = "+intermediateResults);
 
                         if (currentTimestamp.compareTo(finalWindowLongBatch)>0){
-                            System.out.println("Long batch "+cnt+" is over.");
+                            //System.out.println("Long batch "+cnt+" is over.");
                             putIntoMap(str,longBatch);    //che hanno batch 0 !!!!!!!!
                             //System.out.println("intermediateResults finito= "+intermediateResults);
                         }
@@ -210,9 +249,8 @@ public class Producer {
 
                         for(i=0;i<batchesInCurrentWindow.size();i++) {
                             //sending query1 results
-
                             List<Indicator> indicatorsList = calculateIndicators(batchesInCurrentWindow.get(i));
-                            System.out.println("batchesInCurrentWindow.get(i) = "+batchesInCurrentWindow.get(i));
+                            //System.out.println("batchesInCurrentWindow.get(i) = "+batchesInCurrentWindow.get(i));
                             ResultQ1 q1Result = ResultQ1.newBuilder()
                                     .setBenchmarkId(newBenchmark.getId()) //set the benchmark id
                                     .setBatchSeqId(batchSeqId.get(batchesInCurrentWindow.get(i))) //set the sequence number
@@ -234,23 +272,30 @@ public class Producer {
 
                     }
 
+                    System.out.println("sto uscendo dai 5 min!!!");
+                    firstSendAfterReceive = 1;
                 }
 
                 //=========== end of receive results ===========
+
+
+
 
             }
 
             System.out.println("Processed batch #" + cnt);
             ++cnt;
 
-            /*
+/*
             if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
-            */
+ */
+
+
 
         }
-
+        writer.close();
         challengeClient.endBenchmark(newBenchmark);
         System.out.println("ended Benchmark");
         producer.close();
@@ -271,7 +316,7 @@ public class Producer {
 
     //populates finalResults map
     public static List<Integer> calculateResults(String str, int longBatch) throws IOException, InterruptedException {
-        System.out.println("Collecting results!");
+        //System.out.println("Collecting results!");
         Result res;
         List<Integer> batchesInCurrentWindow = new ArrayList<>();
         List<Timestamp> buysTs = null;

@@ -4,6 +4,9 @@ import data.Event;
 import kafka.Consumer;
 import org.apache.flink.api.common.functions.MapFunction;
 
+import java.io.PrintWriter;
+import java.sql.Timestamp;
+
 
 public class MapFunctionEvent implements MapFunction<String, Event> {
 
@@ -17,6 +20,7 @@ public class MapFunctionEvent implements MapFunction<String, Event> {
 
         if (event.getBatch()==0&&event.getNumEvent()==0){
             Consumer.setStartTime(event.getTimestamp().getTime());
+            System.out.println("map-time = "+new Timestamp(System.currentTimeMillis()));
         }
 
         return event;

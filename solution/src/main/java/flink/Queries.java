@@ -1,7 +1,15 @@
 package flink;
 
+import de.tum.i13.challenge.Benchmark;
+import de.tum.i13.challenge.ChallengerGrpc;
+import de.tum.i13.challenge.ResultQ1;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import kafka.Producer;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -11,9 +19,12 @@ import org.apache.flink.util.Collector;
 import utils.Config;
 import data.Event;
 
-import java.io.DataOutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.sql.Timestamp;
 import java.util.Date;
+
+import static kafka.Producer.newBenchmark;
 
 
 public class Queries {
@@ -26,15 +37,19 @@ public class Queries {
         keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(Config.windowLen)))
                 .aggregate(new MyAggregateFunction(), new MyProcessWindowFunction())
-                .setParallelism(3)
+                //.setParallelism(3)
                 .windowAll(TumblingEventTimeWindows.of(Time.minutes(Config.windowLen)))
                 .process(new ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>() {
                     @Override
                     public void process(ProcessAllWindowFunction<FinalOutput, FinalOutput, TimeWindow>.Context context, Iterable<FinalOutput> elements, Collector<FinalOutput> out) throws Exception {
 
+                        System.out.println("proc-time = "+new Timestamp(System.currentTimeMillis()));
+
                         System.out.println("Firing window: "+new Date(context.window().getStart()));
-                        int i = 0;
                         FinalOutput res = elements.iterator().next();  //first element in iterator
+
+                        int i = 0;
+
 
                         String stringToSend = "0;"+
                                 res.getBatch()+";"+
@@ -73,6 +88,8 @@ public class Queries {
                         dout.flush();
                         dout.close();
                         s.close();
+
+
 
                         out.collect(res);
 
