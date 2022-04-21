@@ -39,10 +39,10 @@ $ cd ..
 ```
 At this point you are back to the root folder "solution". Now you need to open two new separate terminal shells to run the two applications in parallel. Type the next command in the former, and the last command in the latter: 
 ```
-$ gradle consumer --args='#port'
+$ gradle consumer --args='#port #parallelism'
 $ gradle run --args='#port'
 ```
-Port number must be identical in both cases, for example --args='6668' (or whatever available port on your machine). 
+Port number must be identical in both cases, for example --args='6668 3' (or whatever available port on your machine). 
 
 So, in order to launch the application properly, you HAVE TO to run the docker-compose file first, then run consumer application inside a shell (using command "gradle consumer --args='#port'") and only eventually run the producer in a new separated shell (command "gradle run --args='#port'"). 
 
