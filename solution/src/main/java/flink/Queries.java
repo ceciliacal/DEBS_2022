@@ -34,7 +34,7 @@ public class Queries {
         KeyedStream<Event, String> keyedStream = stream
                 .keyBy(Event::getSymbol);
 
-        KafkaSink<String> sink = KafkaSink.<String>builder().setBootstrapServers(Config.KAFKA_BROKERS).setRecordSerializer(KafkaRecordSerializationSchema.builder().setTopic(Config.TOPIC_RES).setValueSerializationSchema(new SimpleStringSchema()).build()).setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE).build();
+        KafkaSink<String> sink = KafkaSink.<String>builder().setBootstrapServers(Config.KAFKA_BROKERS).setKafkaProducerConfig(getFlinkPropAsProducer()).setRecordSerializer(KafkaRecordSerializationSchema.builder().setTopic(Config.TOPIC_RES).setValueSerializationSchema(new SimpleStringSchema()).build()).setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE).build();
         //stream.sinkTo(sink);
 
         keyedStream
@@ -60,10 +60,11 @@ public class Queries {
                                 res.getSymbol_WindowEma38().get(res.getSymbol())._2+";"+
                                 res.getSymbol_WindowEma100().get(res.getSymbol())._2+";"+
                                 res.getSymbol_buyCrossovers().get(res.getSymbol())+";"+
-                                res.getSymbol_sellCrossovers().get(res.getSymbol())+"\n"
+                                res.getSymbol_sellCrossovers().get(res.getSymbol())+","
                                 ;
 
                         for (FinalOutput element : elements) {
+                            //System.out.println("element: "+element);
                             if (i==0){
                                 stringToSend = stringToSend;
                             } else{
@@ -75,7 +76,7 @@ public class Queries {
                                         element.getSymbol_WindowEma38().get(element.getSymbol())._2+";"+
                                         element.getSymbol_WindowEma100().get(element.getSymbol())._2+";"+
                                         element.getSymbol_buyCrossovers().get(element.getSymbol())+";"+
-                                        element.getSymbol_sellCrossovers().get(element.getSymbol())+"\n"
+                                        element.getSymbol_sellCrossovers().get(element.getSymbol())+","
                                         ;
 
                             }
@@ -96,24 +97,31 @@ public class Queries {
                          */
 
 
-
-                        //out.collect(stringToSend);
-                        out.collect("cacca");
+                        out.collect(stringToSend);
+                        //out.collect("ciao");
 
                     }
                 })
+
                 .sinkTo(sink);
-        /*
+
                 //.print()    //sink -> prints first record out of the entire FinalOutput collection
+
+/*
                 .addSink(new FlinkKafkaProducer<String>(Config.TOPIC_RES,
                         new utils.ProducerStringSerializationSchema(Config.TOPIC_RES),
                         getFlinkPropAsProducer(),
                         FlinkKafkaProducer.Semantic.EXACTLY_ONCE));
 
-         */
+ */
+
+
+
+
 
 
     }
+
 
     //metodo che crea proprietà per creare sink verso kafka
     public static Properties getFlinkPropAsProducer(){
@@ -122,6 +130,7 @@ public class Queries {
         properties.put(ProducerConfig.CLIENT_ID_CONFIG,Config.CLIENT_ID);
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+        properties.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, "20971520");
 
         return properties;
 

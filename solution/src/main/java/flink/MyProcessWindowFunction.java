@@ -9,6 +9,7 @@ import utils.Config;
 import java.sql.Timestamp;
 import java.util.*;
 
+
 public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, FinalOutput, String, TimeWindow> {
 
     private Map<String, Integer> count;  //counts number of current window per symbol
@@ -164,8 +165,18 @@ public class MyProcessWindowFunction extends ProcessWindowFunction<OutputQuery, 
         List<Integer> currBatches = symbolInBatches.get(s);
         currBatches.stream().forEach(batch -> {
             FinalOutput finalOutput = new FinalOutput(s, batch, symbol_WindowEma38, symbol_WindowEma100, lastPricePerSymbol.get(s), symbol_buyCrossovers, symbol_sellCrossovers);
+            /*
+            String prova = finalOutput.getBatch()+";"+
+                    finalOutput.getSymbol()+";"+
+                    finalOutput.getSymbol_WindowEma38().get(s)._2+";"+
+                    finalOutput.getSymbol_WindowEma100().get(s)._2+";"+
+                    finalOutput.getSymbol_buyCrossovers().get(s)+";"+
+                    finalOutput.getSymbol_sellCrossovers().get(s)
+                    ;
+             */
             out.collect(finalOutput);
         });
+
         //System.out.println("proc-time = "+new Timestamp(System.currentTimeMillis()));
 
         //========== end of retrieving results per window ==========

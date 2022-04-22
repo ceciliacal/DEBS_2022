@@ -85,9 +85,11 @@ public class FinalOutput {
         this.batch = batch;
     }
 
+
+
     @Override
     public String toString() {
-        return "Out1{" +
+        return "FinalOutput{" +
                 "symbol='" + symbol + '\'' +
                 ", batch=" + batch +
                 ", symbol_WindowEma38=" + symbol_WindowEma38 +
@@ -97,4 +99,6 @@ public class FinalOutput {
                 ", symbol_sellCrossovers=" + symbol_sellCrossovers +
                 '}';
     }
+
+
 }
