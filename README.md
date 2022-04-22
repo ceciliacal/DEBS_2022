@@ -1,4 +1,6 @@
 # DEBS_2022
+ --- FOR GC EVALUATION: commit of proposed solution is commit "change" on April 15th, 2022: https://github.com/ceciliacal/DEBS_2022/tree/6126cb5f58af48af73f79f04199a75b3470d1581 . ---
+
 This project is the solution proposed for the DEBS 2022 Grand Challenge by the group having ID group-16.
 
 ## Table of contents
