@@ -16,6 +16,8 @@ Each time the 5-minute long tumbling window fires its results, it sends them bac
 Results are eventually sent from the producer application to the evaluation platform through gRPC API  provided by the Grand Challenge chairs. 
 
 Kafka and Zookeeper run in Docker containers defined in docker-compose.yml file. Each one of the two applications (producer and consumer) has its own main method and can be built and launched using Gradle. 
+
+In class kafka.Producer at line 76 please set your token.
 	
 ## Technologies
 The proposed solution is based on the following frameworks and tools:
