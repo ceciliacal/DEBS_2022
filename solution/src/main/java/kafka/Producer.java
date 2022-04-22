@@ -73,9 +73,9 @@ public class Producer {
                 .setBenchmarkName("Testrun " + new Date().toString())
                 .addQueries(Query.Q1)
                 .addQueries(Query.Q2)
-                .setToken("jkninvezfgvcwexklizimkoonqmudupq") //go to: https://challenge.msrg.in.tum.de/profile/
-                //.setBenchmarkType("evaluation") //Benchmark Type for evaluation
-                .setBenchmarkType("test") //Benchmark Type for testing
+                .setToken("000000000000000000000000000000") //go to: https://challenge.msrg.in.tum.de/profile/
+                .setBenchmarkType("evaluation") //Benchmark Type for evaluation
+                //.setBenchmarkType("test") //Benchmark Type for testing
                 .build();
 
         //Create a new Benchmark
@@ -209,10 +209,12 @@ public class Producer {
 
             System.out.println("Sent batch #" + cnt);
             ++cnt;
-
+/*
             if(cnt > 26) { //for testing you can stop early, in an evaluation run, run until getLast() is True.
                 break;
             }
+
+ */
 
         }
         writer.close();

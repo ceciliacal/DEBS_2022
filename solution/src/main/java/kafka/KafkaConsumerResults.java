@@ -140,8 +140,8 @@ public class KafkaConsumerResults {
                     System.out.println("ended Benchmark consumer");
                 }
 
-            });
 
+            });
 
             consumer.commitAsync();
         };
