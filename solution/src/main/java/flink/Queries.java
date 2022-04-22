@@ -11,7 +11,6 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFuncti
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.util.Collector;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -20,8 +19,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import utils.Config;
 import data.Event;
 
-import java.io.*;
-import java.net.Socket;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Properties;
@@ -35,7 +32,6 @@ public class Queries {
                 .keyBy(Event::getSymbol);
 
         KafkaSink<String> sink = KafkaSink.<String>builder().setBootstrapServers(Config.KAFKA_BROKERS).setKafkaProducerConfig(getFlinkPropAsProducer()).setRecordSerializer(KafkaRecordSerializationSchema.builder().setTopic(Config.TOPIC_RES).setValueSerializationSchema(new SimpleStringSchema()).build()).setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE).build();
-        //stream.sinkTo(sink);
 
         keyedStream
                 .window(TumblingEventTimeWindows.of(Time.minutes(Config.windowLen)))
@@ -52,7 +48,6 @@ public class Queries {
                         FinalOutput res = elements.iterator().next();  //first element in iterator
 
                         int i = 0;
-
 
                         String stringToSend = "0;"+
                                 res.getBatch()+";"+
@@ -85,41 +80,12 @@ public class Queries {
                             i++;
                         }
 
-                        /*
-                        //sending results to producer application server via socketAPI
-                        Socket s = new Socket("localhost",port);
-                        DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-                        dout.writeBytes(stringToSend);
-                        dout.flush();
-                        dout.close();
-                        s.close();
-
-                         */
-
-
                         out.collect(stringToSend);
-                        //out.collect("ciao");
 
                     }
                 })
 
                 .sinkTo(sink);
-
-                //.print()    //sink -> prints first record out of the entire FinalOutput collection
-
-/*
-                .addSink(new FlinkKafkaProducer<String>(Config.TOPIC_RES,
-                        new utils.ProducerStringSerializationSchema(Config.TOPIC_RES),
-                        getFlinkPropAsProducer(),
-                        FlinkKafkaProducer.Semantic.EXACTLY_ONCE));
-
- */
-
-
-
-
-
-
     }
 
 

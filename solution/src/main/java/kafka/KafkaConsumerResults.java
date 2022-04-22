@@ -172,7 +172,7 @@ public class KafkaConsumerResults {
         List<Timestamp> sellsTs = null;
         finalResults = new HashMap<>();     //every window has a new map
 
-        String[] lines = str.split(",");       //splitting the whole string (contains ALL results, separated from "\n")
+        String[] lines = str.split(",");       //splitting the whole string (contains ALL results, separated from ",")
         for (String line : lines) {
             String[] values = line.split(";");  //splitting each field in one single line
 
